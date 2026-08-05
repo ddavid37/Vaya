@@ -32,6 +32,11 @@ Vaya is a car subscription marketplace: one monthly price (insurance/maintenance
 ## Working style (this repo)
 Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judgment over features. Few files — each one meaningful and justified.
 
+## Git workflow
+- Work on `main` only. No feature branches / PRs unless the user asks.
+- After **every** completed change: commit and push to `origin/main` (do not batch or wait).
+- Never commit `.env` or secrets.
+
 ## Principles
 - Keep the architecture simple.
 - Do not over-engineer.

@@ -3,6 +3,7 @@ import { DM_Mono, Outfit } from "next/font/google";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { SignInButton, SignOutButton } from "@/components/AuthButtons";
+import { EstClock } from "@/components/EstClock";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -67,21 +68,27 @@ export default async function RootLayout({
                 </Link>
               </nav>
               {session?.user ? (
-                <div className="flex items-center gap-3">
-                  <span className="hidden text-right sm:block">
-                    <span className="block font-mono text-[0.6rem] tracking-[0.1em] text-ink uppercase">
-                      {session.user.name ?? "Signed in"}
-                    </span>
-                    {session.user.email ? (
-                      <span className="block font-mono text-[0.6rem] normal-case tracking-normal text-mid">
-                        {session.user.email}
+                <div className="flex flex-col items-end gap-1.5">
+                  <div className="flex items-center gap-3">
+                    <span className="hidden text-right sm:block">
+                      <span className="block font-mono text-[0.6rem] tracking-[0.1em] text-ink uppercase">
+                        {session.user.name ?? "Signed in"}
                       </span>
-                    ) : null}
-                  </span>
-                  <SignOutButton />
+                      {session.user.email ? (
+                        <span className="block font-mono text-[0.6rem] normal-case tracking-normal text-mid">
+                          {session.user.email}
+                        </span>
+                      ) : null}
+                    </span>
+                    <SignOutButton />
+                  </div>
+                  <EstClock />
                 </div>
               ) : (
-                <SignInButton />
+                <div className="flex flex-col items-end gap-1.5">
+                  <SignInButton />
+                  <EstClock />
+                </div>
               )}
             </div>
           </div>

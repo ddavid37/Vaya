@@ -141,31 +141,27 @@ export default async function MyCarsPage() {
             ))}
           </div>
 
-          <section className="mt-16 border-t border-rule pt-10 md:mt-24 md:pt-14">
+          <section className="mt-16 border-t border-rule pt-10 text-center md:mt-24 md:pt-14">
             <p className="mb-3 font-mono text-[0.68rem] tracking-[0.22em] text-mid uppercase">
               Total (live only)
             </p>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-[0.9rem] font-light text-mid">
-                  {live.length === 1
-                    ? "1 live subscription"
-                    : `${live.length} live subscriptions`}
-                  {subscriptions.length > live.length
-                    ? ` · ${subscriptions.length - live.length} ended shown below for ledger`
-                    : null}
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  Sum of monthly prices on live commitments only.
-                </p>
-              </div>
-              <p className="text-[clamp(2rem,5vw,3.5rem)] leading-none font-bold tracking-[-0.04em] text-orange">
-                ${monthlyTotal}
-                <span className="ml-1 font-mono text-[0.7rem] font-normal tracking-[0.14em] text-mid uppercase">
-                  /mo
-                </span>
-              </p>
-            </div>
+            <p className="text-[clamp(2rem,5vw,3.5rem)] leading-none font-bold tracking-[-0.04em] text-orange">
+              ${monthlyTotal}
+              <span className="ml-1 font-mono text-[0.7rem] font-normal tracking-[0.14em] text-mid uppercase">
+                /mo
+              </span>
+            </p>
+            <p className="mt-4 text-[0.9rem] font-light text-mid">
+              {live.length === 1
+                ? "1 live subscription"
+                : `${live.length} live subscriptions`}
+              {subscriptions.length > live.length
+                ? ` · ${subscriptions.length - live.length} ended shown for ledger`
+                : null}
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              Sum of monthly prices on live commitments only.
+            </p>
           </section>
         </>
       )}

@@ -1,0 +1,47 @@
+---
+description: Rules for the Vaya take-home assignment. Always apply when working in this repository.
+alwaysApply: true
+---
+# Vaya Take-Home Assignment
+
+## Goal
+Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judgment over features. Try not having so many files. I want each file to be meaningfull and to know why I'm doing it.
+
+## Principles
+- Keep the architecture simple.
+- Do not over-engineer.
+- Prefer readability over abstraction.
+- Implement only what the assignment requires.
+- Explain important design decisions in DECISIONS.md.
+- Document every DB schema/data manipulation in DB.md (migrations, seed transforms, quarantines, manual fixes).
+
+## Tech Stack
+- Next.js
+- TypeScript
+- Supabase (Postgres)
+- Prisma
+- Python
+
+## Data
+- `seed.json` is seed/reference data.
+- `feed.jsonl` is an append-only telemetry event stream.
+- Never design the schema around the JSON structure.
+
+## Code Style
+- Prefer composition over inheritance.
+- Avoid unnecessary dependencies.
+- Write self-explanatory code.
+- Use meaningful names.
+
+## Architecture
+- Domain-first design.
+- Separate marketplace and telemetry logic.
+- Preserve data integrity.
+- One active subscription per vehicle.
+- Treat telemetry as immutable events.
+
+## Before Creating Code
+Ask:
+- Is this necessary?
+- Can it be simpler?
+- Does it match the assignment?

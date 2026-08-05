@@ -1,6 +1,6 @@
 # DECISIONS
 
-Built on Linux. Stack: Next.js (App Router), TypeScript, Postgres, Prisma — Vaya's path of least explanation.
+Stack: Next.js (App Router), TypeScript, Supabase Postgres, Prisma — path of least explanation per project rules.
 
 ---
 
@@ -195,12 +195,12 @@ Failure modes the schema/tests must survive (from the file, not invented):
 - **Appeal of rejected:** matches how the seed is shaped; fewer joins on the browse page.
 - **Cost of rejected:** seed already lies; two writers both read AVAILABLE and both win; Part 1's simultaneous-commit requirement fails under concurrency. Status becomes a cache we can recompute.
 
-### Fork B — SQLite for one-command demo vs Postgres
+### Fork B — SQLite vs local Docker Postgres vs Supabase Postgres
 
-- **Picked:** Postgres (Docker) + Prisma, matching Vaya.
-- **Rejected:** SQLite file in-repo for zero-Docker setup.
-- **Appeal of rejected:** truly one binary less on a clean machine; partial indexes work.
-- **Cost of rejected:** `FOR UPDATE` / isolation semantics differ; we'd re-explain every concurrency demo. Docker Compose is the setup tax; worth it.
+- **Picked:** Supabase-hosted Postgres + Prisma (matches `.cursor/rules` / Vaya-shaped stack).
+- **Rejected:** SQLite (weak `FOR UPDATE` story for the concurrency demo); local Docker Postgres (extra Compose surface for a take-home).
+- **Appeal of rejected options:** zero cloud account (SQLite/Docker); identical SQL to prod (Docker).
+- **Cost of picked:** needs a Supabase project + `DATABASE_URL` in `.env`; connection pooling (`?pgbouncer=true` / pooler port) may be needed later for serverless.
 
 ### Fork C — Mid-flight: early end vs plan change vs car swap
 

@@ -1,37 +1,50 @@
 # Vaya
 
-Engineering home assignment — car subscription marketplace (Part 1) + telemetry (Part 2).
+Car subscription marketplace (Part 1) + telemetry (Part 2).
+
+## Stack
+
+Next.js (App Router), TypeScript, Prisma, Supabase Postgres.
 
 ## Status
 
-**Part 1 in progress.** Next.js + Postgres + Prisma scaffolding is wired up; models, seed logic, and UI features come next. See:
+Scaffold only — no schema or business logic yet.
 
-- [`DECISIONS.md`](./DECISIONS.md) — architecture first, then forks and unspecified calls
-- [`PLAN.md`](./PLAN.md) — build order toward the two-command demo
+See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md) (every DB change), and [`PLAN.md`](./PLAN.md).
 
 ## Data
 
-Assignment fixtures (load as-is, do not hand-clean):
+- `data/seed.json` — marketplace seed/reference data
+- `data/feed.jsonl` — append-only telemetry stream
 
-- `data/seed.json` — dealers, plans, vehicles, drivers, subscriptions, events
-- `data/feed.jsonl` — one month of vendor webhook/REST telemetry
+## Setup
 
-## Run
+1. Copy `.env.example` → `.env` and set your Supabase `DATABASE_URL`.
+2. Install, migrate, run:
 
 ```bash
-npm run setup
+npm install
+npx prisma migrate deploy
+npm run db:seed
 npm run dev
 ```
 
-`npm run setup` starts Postgres via Docker Compose, runs Prisma migrations, and seeds the database. Target OS is **Linux** (Docker Postgres also verified on macOS during development).
+`db:seed` loads `data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
 
-## Deliverables (assignment checklist)
+## App
 
-| Artifact | Status |
-|---|---|
-| Architecture / DECISIONS | Done (this branch) |
-| Code Part 1 + Part 2 | Planned |
-| HOW-I-BUILT-IT | Pending build |
-| Telemetry memo | Pending (read feed first; draft after ingest) |
-| Video | Pending |
-| README two-command | Pending implementation |
+- `/` — marketplace (bookable cars + commit)
+- `/ops` — fleet + early end
+- `/ops/conflicts` — seed/runtime conflict quarantine
+
+## Layout
+
+```
+app/           routes + API
+components/    CommitForm, EarlyEndButtons
+lib/           db client, subscription domain
+prisma/        schema + migrations
+scripts/       seed loader
+data/          assignment fixtures
+DB.md          log of every DB manipulation
+```

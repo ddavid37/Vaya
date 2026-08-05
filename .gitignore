@@ -1,11 +1,7 @@
 *.pdf
-# Assignment fixtures live under data/; ignore stray duplicates left at repo root
 /seed.json
 /feed.jsonl
 node_modules/
 .next/
 .env
-.env.local
-dist/
-coverage/
 *.tsbuildinfo

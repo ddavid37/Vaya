@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Part 1 marketplace schema (domain-first).
+// Telemetry tables are intentionally omitted until Part 2.
+// Seed/feed JSON shapes must not dictate this model.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +9,169 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// --- enums ---
+
+enum VehicleStatus {
+  AVAILABLE
+  SUBSCRIBED
+  RESERVED
+  PENDING_INTAKE
+}
+
+/// Live set for the one-commitment invariant: RESERVED | ACTIVE | ENDING.
+/// CONFLICTING = quarantined seed/runtime row (not live; excluded from unique index).
+enum SubscriptionStatus {
+  RESERVED
+  ACTIVE
+  ENDING
+  ENDED
+  CONFLICTING
+}
+
+enum LedgerEntryType {
+  PERIOD_BASE
+  MILES_INCLUDED
+  MILES_USED
+  OVERAGE
+  PRORATION
+}
+
+enum ConflictType {
+  DUAL_LIVE_SUBSCRIPTION
+  VEHICLE_STATUS_MISMATCH
+  PRICE_MISMATCH
+  ODOMETER_IMPOSSIBILITY
+}
+
+// --- catalog / fleet ---
+
+model Dealer {
+  id       String    @id
+  name     String
+  city     String
+  state    String
+  joinedAt DateTime  @map("joined_at") @db.Date
+  vehicles Vehicle[]
+
+  @@map("dealers")
+}
+
+model Plan {
+  id             String         @id
+  name           String
+  tier           String
+  monthlyMiles   Int            @map("monthly_miles")
+  overagePerMile Decimal        @map("overage_per_mile") @db.Decimal(10, 2)
+  basePrice      Decimal        @map("base_price") @db.Decimal(10, 2)
+  subscriptions  Subscription[]
+
+  @@map("plans")
+}
+
+model Vehicle {
+  id            String         @id
+  vin           String         @unique
+  dealerId      String         @map("dealer_id")
+  dealer        Dealer         @relation(fields: [dealerId], references: [id])
+  year          Int
+  make          String
+  model         String
+  trim          String
+  color         String
+  odometer      Int
+  /// Display projection — not the availability lock. See live subscription index.
+  status        VehicleStatus
+  monthlyPrice  Decimal?       @map("monthly_price") @db.Decimal(10, 2)
+  listedAt      DateTime       @map("listed_at") @db.Date
+  subscriptions Subscription[]
+
+  @@map("vehicles")
+}
+
+model Driver {
+  id            String         @id
+  email         String
+  firstName     String         @map("first_name")
+  lastName      String         @map("last_name")
+  phone         String?
+  licenseState  String         @map("license_state")
+  createdAt     DateTime       @map("created_at") @db.Date
+  subscriptions Subscription[]
+
+  @@map("drivers")
+}
+
+// --- commitment ---
+
+model Subscription {
+  id                   String             @id
+  driverId             String             @map("driver_id")
+  driver               Driver             @relation(fields: [driverId], references: [id])
+  vehicleId            String             @map("vehicle_id")
+  vehicle              Vehicle            @relation(fields: [vehicleId], references: [id])
+  planId               String             @map("plan_id")
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus
+  /// Billing snapshot — what we owe under, not plans.base_price.
+  monthlyPrice         Decimal            @map("monthly_price") @db.Decimal(10, 2)
+  startDate            DateTime           @map("start_date") @db.Date
+  endDate              DateTime?          @map("end_date") @db.Date
+  billingPeriodStart   DateTime?          @map("billing_period_start") @db.Date
+  billingPeriodEnd     DateTime?          @map("billing_period_end") @db.Date
+  startOdometer        Int                @map("start_odometer")
+  milesThisPeriod      Int                @default(0) @map("miles_this_period")
+  cancelledAt          DateTime?          @map("cancelled_at")
+  previousPlanId       String?            @map("previous_plan_id")
+  previousMonthlyPrice Decimal?           @map("previous_monthly_price") @db.Decimal(10, 2)
+  ledgerEntries        LedgerEntry[]
+
+  @@index([vehicleId, status])
+  @@index([driverId])
+  @@map("subscriptions")
+}
+
+/// Append-only audit for billing-relevant mutations.
+/// subjectType + subjectId is polymorphic (subscription | vehicle).
+model DomainEvent {
+  id          String   @id
+  at          DateTime
+  type        String
+  subjectType String   @map("subject_type")
+  subjectId   String   @map("subject_id")
+  data        Json
+
+  @@index([subjectType, subjectId])
+  @@index([at])
+  @@map("domain_events")
+}
+
+/// Explainable money-shaped facts for ops / email defense. No card charges.
+model LedgerEntry {
+  id             String          @id @default(cuid())
+  subscriptionId String          @map("subscription_id")
+  subscription   Subscription    @relation(fields: [subscriptionId], references: [id])
+  type           LedgerEntryType
+  amount         Decimal         @db.Decimal(10, 2)
+  quantity       Decimal?        @db.Decimal(12, 3)
+  unit           String?
+  explanation    String
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@index([subscriptionId])
+  @@map("ledger_entries")
+}
+
+/// Quarantine / mismatch records. Never silently rewrite bad seed rows away.
+model DataConflict {
+  id          String       @id @default(cuid())
+  type        ConflictType
+  subjectType String       @map("subject_type")
+  subjectIds  String[]     @map("subject_ids")
+  resolution  String
+  rationale   String
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@map("data_conflicts")
 }

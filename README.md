@@ -43,7 +43,7 @@ npm run dev
 ## App
 
 - `/` — marketplace (Google sign-in + commit)
-- `/mine` — your live commitments (per Google account)
+- `/mine` — your commitments: early end (date picker) + ledger + monthly total
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
 

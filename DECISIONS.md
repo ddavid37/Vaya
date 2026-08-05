@@ -132,13 +132,15 @@ Why this one over swap-car or change-plan:
 - Plan change is still modeled (ledger + event types) because seed has `subscription.plan_changed`; we will not build the driver-facing plan-change flow in Part 1.
 - Car swap is the most operationally heavy (two vehicles, two odometer handovers) and deserves its own day.
 
+**Where the driver manages it:** **My cars** (`/mine`) — per commitment: date picker + Schedule end / End now + ledger explanations on the same card. Ops remains the **full fleet** screen (seed + everyone); it is not the place a Google-signed-in driver should hunt for “their” Bronco among 40 vehicles.
+
 **What "know what's owed" means without moving money:**
 
 On early end inside a billing period, write ledger entries:
 
 - `PERIOD_BASE` — full monthly price for the open period (or document the policy: charge through period end vs prorate; we pick **charge through scheduled endDate if ENDING, prorate by day if immediate END** and say so on the record)
 - `MILES_INCLUDED` / `MILES_USED` / `OVERAGE` — from subscription miles + plan allowance, with source notes
-- Human-readable `explanation` string on each row so ops can paste into an email
+- Human-readable `explanation` string on each row so ops / the driver page can paste into an email
 
 ### Telemetry pipeline (Part 2)
 
@@ -210,10 +212,16 @@ Failure modes the schema/tests must survive (from the file, not invented):
 
 ### Fork C — Mid-flight: early end vs plan change vs car swap
 
-- **Picked:** early end (see above).
+- **Picked:** early end (see above). Driver-facing management lives on **My cars** with an explicit end-date picker; Ops keeps fleet-wide early-end buttons for the pilot.
 - **Rejected for primary build:** plan change (data already hints at it); car swap.
 - **Cost of not building plan change UX:** miss a nice ledger story — mitigated by still recording plan-change-shaped ledger types and surfacing seed's `sub-009` history in ops.
 - **Cost of not building swap:** no dual-vehicle handover UX — acceptable for pilot scope; swap is a day-two feature that reuses the same invariant.
+
+### Fork C2 — Where does a driver early-end?
+
+- **Picked:** **My cars** as the primary place (own commitments + date picker + ledger on the same card). Ops stays the full-fleet / conflict console (seed rows included on purpose).
+- **Rejected:** force the demo driver to scroll Ops past every seed subscription to find their car.
+- **Why Ops still lists everyone:** the brief wants fleet truth + “what we decided about bad seed”; that is not a personal cart.
 
 ### Fork D — Seed dual-ACTIVE: pick winner vs refuse to load vs keep both live
 

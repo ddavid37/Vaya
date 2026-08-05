@@ -1,9 +1,11 @@
 import { auth } from "@/auth";
 import { SignInButton } from "@/components/AuthButtons";
+import { ManageSubscription } from "@/components/ManageSubscription";
 import { db } from "@/lib/db";
 import Link from "next/link";
 
 const LIVE = ["RESERVED", "ACTIVE", "ENDING"] as const;
+const MINE = [...LIVE, "ENDED"] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -33,16 +35,20 @@ export default async function MyCarsPage() {
   const subscriptions = await db.subscription.findMany({
     where: {
       driverId: session.driverId,
-      status: { in: [...LIVE] },
+      status: { in: [...MINE] },
     },
     include: {
       vehicle: { include: { dealer: true } },
       plan: true,
+      ledgerEntries: { orderBy: { createdAt: "desc" }, take: 12 },
     },
-    orderBy: { startDate: "desc" },
+    orderBy: [{ status: "asc" }, { startDate: "desc" }],
   });
 
-  const monthlyTotal = subscriptions
+  const live = subscriptions.filter((s) =>
+    LIVE.includes(s.status as (typeof LIVE)[number]),
+  );
+  const monthlyTotal = live
     .reduce((sum, s) => sum + Number(s.monthlyPrice), 0)
     .toLocaleString("en-US", {
       minimumFractionDigits: 0,
@@ -59,13 +65,13 @@ export default async function MyCarsPage() {
         Your <span className="text-orange">commitments.</span>
       </h1>
       <p className="mt-3 max-w-xl text-[0.9rem] leading-[1.7] font-light text-mid">
-        Live subscriptions for this Google account — the cars you hold right
-        now. Not a cart: once committed, the vehicle leaves the marketplace.
+        Your Google account only — not the whole fleet. Manage early end here;
+        Ops stays the full-fleet / conflict screen.
       </p>
 
       {subscriptions.length === 0 ? (
         <div className="mt-10 border border-rule px-6 py-10">
-          <p className="text-mid">No live commitments yet.</p>
+          <p className="text-mid">No commitments yet.</p>
           <Link
             href="/"
             className="mt-4 inline-block font-mono text-[0.65rem] tracking-[0.14em] text-orange uppercase hover:opacity-80"
@@ -75,75 +81,82 @@ export default async function MyCarsPage() {
         </div>
       ) : (
         <>
-          <div className="mt-8 w-full overflow-x-auto border border-rule">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-rule">
-                <tr>
-                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
-                    Vehicle
-                  </th>
-                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
-                    Plan / price
-                  </th>
-                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
-                    Started
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="border-b border-rule last:border-0"
-                  >
-                    <td className="px-4 py-3.5">
-                      <div className="font-medium text-ink">
-                        {s.vehicle.year} {s.vehicle.make} {s.vehicle.model}
-                      </div>
-                      <div className="mt-0.5 font-mono text-[0.7rem] text-muted">
-                        {s.vehicle.id} · VIN {s.vehicle.vin} ·{" "}
-                        {s.vehicle.dealer.city}, {s.vehicle.dealer.state}
-                      </div>
-                      <div className="mt-0.5 font-mono text-[0.7rem] text-muted">
-                        {s.id}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-[0.75rem] text-orange">
+          <div className="mt-8 flex flex-col gap-8">
+            {subscriptions.map((s) => (
+              <article
+                key={s.id}
+                className="border border-rule px-5 py-5 md:px-6 md:py-6"
+              >
+                <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-[0.65rem] tracking-[0.14em] text-orange uppercase">
                       {s.status}
-                    </td>
-                    <td className="px-4 py-3.5 text-ink">
-                      <div>
-                        {s.plan.name} {s.plan.tier}
-                      </div>
-                      <div className="font-mono text-[0.7rem] text-muted">
-                        ${s.monthlyPrice.toString()}/mo
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-[0.75rem] text-mid">
+                    </p>
+                    <h2 className="mt-2 text-xl font-bold tracking-tight text-ink uppercase md:text-2xl">
+                      {s.vehicle.year} {s.vehicle.make} {s.vehicle.model}
+                    </h2>
+                    <p className="mt-2 font-mono text-[0.7rem] text-muted">
+                      {s.vehicle.id} · VIN {s.vehicle.vin} ·{" "}
+                      {s.vehicle.dealer.city}, {s.vehicle.dealer.state}
+                    </p>
+                    <p className="mt-1 font-mono text-[0.7rem] text-muted">
+                      {s.id} · {s.plan.name} {s.plan.tier} · $
+                      {s.monthlyPrice.toString()}/mo · started{" "}
                       {s.startDate.toISOString().slice(0, 10)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {s.endDate
+                        ? ` · end ${s.endDate.toISOString().slice(0, 10)}`
+                        : ""}
+                    </p>
+
+                    {s.ledgerEntries.length > 0 ? (
+                      <div className="mt-5">
+                        <p className="mb-2 font-mono text-[0.6rem] tracking-[0.14em] text-mid uppercase">
+                          What&apos;s owed (ledger)
+                        </p>
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-mid">
+                          {s.ledgerEntries.map((l) => (
+                            <li key={l.id}>{l.explanation}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="mt-5 text-sm text-muted">
+                        No ledger lines yet — schedule or end to record what&apos;s
+                        owed.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="w-full shrink-0 lg:max-w-xs">
+                    <ManageSubscription
+                      subscriptionId={s.id}
+                      status={s.status}
+                      currentEndDate={
+                        s.endDate ? s.endDate.toISOString().slice(0, 10) : null
+                      }
+                    />
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
 
           <section className="mt-16 border-t border-rule pt-10 md:mt-24 md:pt-14">
             <p className="mb-3 font-mono text-[0.68rem] tracking-[0.22em] text-mid uppercase">
-              Total
+              Total (live only)
             </p>
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-[0.9rem] font-light text-mid">
-                  {subscriptions.length === 1
+                  {live.length === 1
                     ? "1 live subscription"
-                    : `${subscriptions.length} live subscriptions`}
+                    : `${live.length} live subscriptions`}
+                  {subscriptions.length > live.length
+                    ? ` · ${subscriptions.length - live.length} ended shown below for ledger`
+                    : null}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  Sum of monthly prices on this account (snapshot at commit).
+                  Sum of monthly prices on live commitments only.
                 </p>
               </div>
               <p className="text-[clamp(2rem,5vw,3.5rem)] leading-none font-bold tracking-[-0.04em] text-orange">

@@ -4,8 +4,6 @@ Notes on process, AI use, and choices that matter for grading. Keep this short a
 
 ---
 
-## Part 1
-
 ## Demonstrating the one-live-commitment invariant
 
 **Decision:** use **Google sign-in** so two real people can race the same car in the UI.
@@ -25,11 +23,29 @@ Why not fake “pick a seed driver”? We wanted the video to look like real con
 
 ---
 
+## Mid-flight change: early end on My cars
 
+**Decision:** pick **end subscription early** (not plan change, not car swap). Manage it on **My cars**, not by hunting through Ops.
+
+**Why early end:** matches seed (`ENDING`), frees the car for the invariant, and forces a clear “what’s owed” ledger without payments.
+
+**Why My cars (not Ops for the driver demo):**
+
+- Ops shows the **entire fleet** from seed (many subscribed cars that are not “mine”). That is correct for fleet truth + conflict quarantine.
+- My cars shows **only this Google account’s** commitments. Early end with a **date picker**, then ledger lines on the same card so someone can answer “why was I charged that?”
+
+**Policy written on the ledger:**
+
+- Schedule end → status `ENDING`, charge full period base through the **chosen** end date + miles/overage lines
+- End now → status `ENDED`, day-prorate base + miles/overage lines
+
+Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo path is Marketplace → My cars → manage → ledger.
+
+---
 
 ## AI use (ongoing)
 
 - Used Cursor agents for scaffolding, schema, and UI brand pass from `website_resources/`.
-- Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring.
+- Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring, My cars manage UX.
 
 *(Expand with throwaways / wrong outputs as the build continues.)*

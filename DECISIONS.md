@@ -113,7 +113,13 @@ Load `seed.json` as-is. Each violation inserts a `data_conflicts` row (type, sub
 
 **Enforcement (seed load):** detect dual-ACTIVE (and status drift); quarantine; do not drop rows.
 
-**Proof for the video:** concurrent `POST /api/subscriptions` against the same vehicle (script + UI), one 201, one 409; DB query shows a single live row.
+**Proof for the video (how we demonstrate the invariant):**
+
+Google sign-in creates a real `Driver` from the Google profile (email + name) on first login. Marketplace commits use the session driver — not a hard-coded seed user.
+
+Demo: open the app in **two Chrome profiles**, each signed in with a different Gmail. Both pick the same bookable car and hit **Commit** together. Exactly one gets success; the other gets a clear **409 / VEHICLE_NOT_AVAILABLE**. No Incognito required — two regular profiles = two sessions.
+
+Optional backup: parallel `curl` races against `POST /api/subscriptions` (same outcome).
 
 ### Mid-flight change (Part 1 pick)
 
@@ -236,7 +242,7 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Op
 
 | Topic | Decision |
 |---|---|
-| Who is "ops"? | Single unauthenticated ops area under `/ops` for the pilot demo (no auth provider). Flag as day-two. |
+| Who is "ops"? | `/ops` stays open (no Google required) for the pilot. Marketplace uses Google sign-in so two real accounts can race a commit. |
 | Dealer scope | Pilot copy talks about one dealer; seed has three. Marketplace shows all bookable cars; ops can filter by dealer. |
 | `RESERVED` hold TTL | Seed reservations are months old. Treat RESERVED as live forever until activated/cancelled in this build; ask about TTL on Slack. |
 | `PENDING_INTAKE` | Not bookable; show in ops only. |
@@ -253,7 +259,7 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Op
 
 ### Next, in order, with another day
 
-1. Auth (driver sessions + ops role).
+1. Ops role / auth (marketplace Google is in; ops still open).
 2. Plan-change mid-cycle UX on top of existing ledger types.
 3. Real webhook endpoint + replay tool (same ingestor).
 4. Car-swap flow with dual odometer capture.

@@ -53,6 +53,18 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
+## 2026-08-05 — Google sign-in drivers (runtime)
+
+**Action:** No migration. On first Google login, Auth.js upserts a `drivers` row (`id = drv-<hash of email>`, email/name from Google, `license_state = XX`).
+
+**Why:** Marketplace commits need a real session driver so two Gmail accounts can race the same car (see `DECISIONS.md` / `HOW-I-BUILT-IT.md`).
+
+**Note:** Seed emails are untouched. Lookup is case-insensitive by email; if a Google email somehow matched a seed driver, that row would be reused (unlikely with real Gmails).
+
+**Reversible?** Delete the `drv-…` rows created by login; re-login recreates them.
+
+---
+
 ## Template for future entries
 
 ```md

@@ -46,7 +46,7 @@ export function EarlyEndButtons({ subscriptionId }: { subscriptionId: string }) 
           type="button"
           disabled={pending}
           onClick={() => run("SCHEDULE")}
-          className="rounded border border-neutral-300 px-2 py-1 text-xs disabled:opacity-50"
+          className="border border-rule-s px-2 py-1 font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase transition-colors hover:border-orange hover:text-orange disabled:opacity-50"
         >
           Schedule end
         </button>
@@ -54,12 +54,14 @@ export function EarlyEndButtons({ subscriptionId }: { subscriptionId: string }) 
           type="button"
           disabled={pending}
           onClick={() => run("IMMEDIATE")}
-          className="rounded bg-neutral-900 px-2 py-1 text-xs text-white disabled:opacity-50"
+          className="bg-orange px-2 py-1 font-mono text-[0.6rem] tracking-[0.12em] text-white uppercase transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           End now
         </button>
       </div>
-      {message ? <span className="text-xs text-neutral-600">{message}</span> : null}
+      {message ? (
+        <span className="font-mono text-[0.65rem] text-mid">{message}</span>
+      ) : null}
     </div>
   );
 }

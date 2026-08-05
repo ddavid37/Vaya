@@ -6,11 +6,11 @@ Car subscription marketplace (Part 1) + telemetry (Part 2).
 
 Work directly on `main`. Commit and push to `origin/main` — **no feature branches, no pull requests** unless explicitly asked.
 
-See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md) (every DB change), and [`PLAN.md`](./PLAN.md).
+See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md), [`HOW-I-BUILT-IT.md`](./HOW-I-BUILT-IT.md), and [`PLAN.md`](./PLAN.md).
 
 ## Stack
 
-Next.js (App Router), TypeScript, Prisma, Supabase Postgres.
+Next.js (App Router), TypeScript, Prisma, Supabase Postgres, Auth.js (Google).
 
 ## Data
 
@@ -19,7 +19,7 @@ Next.js (App Router), TypeScript, Prisma, Supabase Postgres.
 
 ## Setup
 
-1. Copy `.env.example` → `.env` and set your Supabase `DATABASE_URL`.
+1. Copy `.env.example` → `.env`. Set `DATABASE_URL`, `AUTH_SECRET`, and Google OAuth vars (below).
 2. Install, migrate, run:
 
 ```bash
@@ -31,9 +31,19 @@ npm run dev
 
 `db:seed` loads `data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
 
+### Google OAuth (Marketplace sign-in)
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → Create **OAuth client ID** (Web application).
+2. Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+3. Put Client ID / Secret in `.env` as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
+4. Set `AUTH_SECRET` (`openssl rand -base64 32`) and `AUTH_URL=http://localhost:3000`.
+
+**Invariant demo:** two Chrome profiles, each signed in with a different Gmail, Commit the same car → one win, one clear 409. Details in `DECISIONS.md` / `HOW-I-BUILT-IT.md`.
+
 ## App
 
-- `/` — marketplace (bookable cars + commit)
+- `/` — marketplace (Google sign-in + commit)
+- `/mine` — your live commitments (per Google account)
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
 
@@ -41,7 +51,8 @@ npm run dev
 
 ```
 app/           routes + API
-components/    CommitForm, EarlyEndButtons
+auth.ts        Auth.js (Google → Driver)
+components/    CommitForm, AuthButtons, …
 lib/           db client, subscription domain
 prisma/        schema + migrations
 scripts/       seed loader

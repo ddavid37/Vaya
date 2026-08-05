@@ -7,11 +7,9 @@ type Plan = { id: string; name: string; tier: string; basePrice: string };
 
 export function CommitForm({
   vehicleId,
-  driverId,
   plans,
 }: {
   vehicleId: string;
-  driverId: string;
   plans: Plan[];
 }) {
   const router = useRouter();
@@ -26,9 +24,13 @@ export function CommitForm({
       const res = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ driverId, vehicleId, planId }),
+        body: JSON.stringify({ vehicleId, planId }),
       });
-      const data = (await res.json()) as { id?: string; code?: string; message?: string };
+      const data = (await res.json()) as {
+        id?: string;
+        code?: string;
+        message?: string;
+      };
       if (!res.ok) {
         setMessage(`${data.code ?? res.status}: ${data.message ?? "failed"}`);
         return;
@@ -43,7 +45,7 @@ export function CommitForm({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       <select
-        className="rounded border border-neutral-300 px-2 py-1 text-sm"
+        className="border border-rule-s bg-white px-2 py-1.5 text-sm text-ink outline-none focus:border-orange"
         value={planId}
         onChange={(e) => setPlanId(e.target.value)}
       >
@@ -57,12 +59,12 @@ export function CommitForm({
         type="button"
         disabled={pending || !planId}
         onClick={onCommit}
-        className="rounded bg-neutral-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+        className="bg-orange px-3 py-1.5 font-mono text-[0.65rem] tracking-[0.14em] text-white uppercase transition-opacity hover:opacity-80 disabled:opacity-50"
       >
         {pending ? "Committing…" : "Commit"}
       </button>
       {message ? (
-        <span className="text-sm text-neutral-600">{message}</span>
+        <span className="font-mono text-[0.7rem] text-mid">{message}</span>
       ) : null}
     </div>
   );

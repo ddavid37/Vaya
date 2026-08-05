@@ -28,20 +28,34 @@ export default async function OpsPage() {
   );
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Ops · Fleet</h1>
-      <p className="mt-1 text-sm text-neutral-600">
-        Live commitment is the lock — not <code>vehicles.status</code> alone.
+    <main className="w-full px-6 py-10 md:px-14 md:py-12">
+      <p className="mb-4 flex items-center gap-3 font-mono text-[0.72rem] tracking-[0.22em] text-orange uppercase">
+        <span className="h-px w-[22px] bg-orange" />
+        Ops
+      </p>
+      <h1 className="text-[clamp(1.75rem,4vw,2.5rem)] leading-[0.95] font-bold tracking-[-0.01em] text-ink uppercase">
+        Fleet <span className="text-orange">truth.</span>
+      </h1>
+      <p className="mt-3 max-w-xl text-[0.9rem] leading-[1.7] font-light text-mid">
+        Live commitment is the lock — not <code className="font-mono text-[0.8rem]">vehicles.status</code> alone.
       </p>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+      <div className="mt-8 w-full overflow-x-auto border border-rule">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
+          <thead className="border-b border-rule">
             <tr>
-              <th className="px-4 py-3 font-medium">Vehicle</th>
-              <th className="px-4 py-3 font-medium">Row status</th>
-              <th className="px-4 py-3 font-medium">Live / conflict</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
+              <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                Vehicle
+              </th>
+              <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                Row status
+              </th>
+              <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                Live / conflict
+              </th>
+              <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -56,32 +70,38 @@ export default async function OpsPage() {
                 conflictSubjects.has(v.id) ||
                 v.subscriptions.some((s) => conflictSubjects.has(s.id));
               const derived =
-                live[0]?.status ?? (v.status === "PENDING_INTAKE" ? "PENDING" : "FREE");
+                live[0]?.status ??
+                (v.status === "PENDING_INTAKE" ? "PENDING" : "FREE");
 
               return (
-                <tr key={v.id} className="border-b border-neutral-100 align-top last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">
+                <tr
+                  key={v.id}
+                  className="border-b border-rule align-top last:border-0"
+                >
+                  <td className="px-4 py-3.5">
+                    <div className="font-medium text-ink">
                       {v.id} · {v.make} {v.model}
                     </div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="mt-0.5 font-mono text-[0.7rem] text-muted">
                       {v.dealer.name} · …{v.vin.slice(-6)}
                       {hasConflictBadge ? (
-                        <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-900">
+                        <span className="ml-2 border border-orange/30 bg-orange/10 px-1.5 py-0.5 text-orange">
                           conflict
                         </span>
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{v.status}</td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{derived}</div>
+                  <td className="px-4 py-3.5 font-mono text-[0.75rem] text-mid">
+                    {v.status}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="font-medium text-ink">{derived}</div>
                     {live.map((s) => (
-                      <div key={s.id} className="mt-1 text-xs text-neutral-600">
+                      <div key={s.id} className="mt-1 text-xs text-mid">
                         {s.id} · {s.driver.firstName} {s.driver.lastName} · $
                         {s.monthlyPrice.toString()} · {s.milesThisPeriod} mi
                         {s.ledgerEntries.length > 0 ? (
-                          <ul className="mt-1 list-disc pl-4 text-neutral-500">
+                          <ul className="mt-1 list-disc pl-4 text-muted">
                             {s.ledgerEntries.map((l) => (
                               <li key={l.id}>{l.explanation}</li>
                             ))}
@@ -90,16 +110,16 @@ export default async function OpsPage() {
                       </div>
                     ))}
                     {conflicting.map((s) => (
-                      <div key={s.id} className="mt-1 text-xs text-amber-800">
+                      <div key={s.id} className="mt-1 text-xs text-orange">
                         {s.id} CONFLICTING (quarantined)
                       </div>
                     ))}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5">
                     {live[0] ? (
                       <EarlyEndButtons subscriptionId={live[0].id} />
                     ) : (
-                      <span className="text-xs text-neutral-400">—</span>
+                      <span className="text-xs text-muted">—</span>
                     )}
                   </td>
                 </tr>

@@ -1,12 +1,18 @@
+import { auth } from "@/auth";
 import { CommitForm } from "@/components/CommitForm";
+import { PictureButton } from "@/components/PictureButton";
+import { SignInButton } from "@/components/AuthButtons";
 import { db } from "@/lib/db";
+import Image from "next/image";
 
 const LIVE = ["RESERVED", "ACTIVE", "ENDING"] as const;
 
 export const dynamic = "force-dynamic";
 
 export default async function MarketplacePage() {
-  const [vehicles, plans, drivers] = await Promise.all([
+  const session = await auth();
+
+  const [vehicles, plans, driver] = await Promise.all([
     db.vehicle.findMany({
       include: {
         dealer: true,
@@ -15,19 +21,14 @@ export default async function MarketplacePage() {
       orderBy: { id: "asc" },
     }),
     db.plan.findMany({ orderBy: { basePrice: "asc" } }),
-    db.driver.findMany({
-      include: {
-        subscriptions: { where: { status: { in: [...LIVE] } } },
-      },
-      orderBy: { id: "asc" },
-    }),
+    session?.driverId
+      ? db.driver.findUnique({ where: { id: session.driverId } })
+      : Promise.resolve(null),
   ]);
 
   const bookable = vehicles.filter(
     (v) => v.status !== "PENDING_INTAKE" && v.subscriptions.length === 0,
   );
-  const driver =
-    drivers.find((d) => d.subscriptions.length === 0) ?? drivers[0] ?? null;
 
   const planOptions = plans.map((p) => ({
     id: p.id,
@@ -37,69 +38,118 @@ export default async function MarketplacePage() {
   }));
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Marketplace</h1>
-      <p className="mt-1 text-sm text-neutral-600">
-        Bookable cars only (no live commitment, not pending intake).
-        {driver ? (
-          <>
-            {" "}
-            Committing as{" "}
-            <span className="font-medium text-neutral-800">
-              {driver.firstName} {driver.lastName}
-            </span>{" "}
-            ({driver.id}).
-          </>
-        ) : null}
-      </p>
-
-      {bookable.length === 0 ? (
-        <p className="mt-8 text-neutral-600">No bookable vehicles right now.</p>
-      ) : (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
-              <tr>
-                <th className="px-4 py-3 font-medium">Vehicle</th>
-                <th className="px-4 py-3 font-medium">Dealer</th>
-                <th className="px-4 py-3 font-medium">List price</th>
-                <th className="px-4 py-3 font-medium">Commit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookable.map((v) => (
-                <tr key={v.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">
-                      {v.year} {v.make} {v.model}
-                    </div>
-                    <div className="text-xs text-neutral-500">
-                      {v.id} · …{v.vin.slice(-6)} · {v.odometer.toLocaleString()} mi
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-700">
-                    {v.dealer.city}, {v.dealer.state}
-                  </td>
-                  <td className="px-4 py-3">
-                    {v.monthlyPrice != null ? `$${v.monthlyPrice}` : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {driver ? (
-                      <CommitForm
-                        vehicleId={v.id}
-                        driverId={driver.id}
-                        plans={planOptions}
-                      />
-                    ) : (
-                      <span className="text-neutral-500">No driver</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <main className="w-full">
+      <section className="grid w-full grid-cols-1 items-center gap-8 border-b border-rule px-6 py-10 md:grid-cols-2 md:gap-12 md:px-14 md:py-12">
+        <div>
+          <p className="mb-4 flex items-center gap-3 font-mono text-[0.72rem] tracking-[0.22em] text-orange uppercase">
+            <span className="h-px w-[22px] bg-orange" />
+            Marketplace
+          </p>
+          <h1 className="text-[clamp(1.75rem,4vw,2.75rem)] leading-[0.95] font-bold tracking-[-0.01em] text-ink uppercase">
+            Bookable cars.
+            <br />
+            <span className="text-orange">One commitment each.</span>
+          </h1>
+          <p className="mt-5 max-w-md text-[0.9rem] leading-[1.7] font-light text-mid">
+            Free cars only — no live commitment, not pending intake.
+            {driver ? (
+              <>
+                {" "}
+                Signed in as{" "}
+                <span className="font-medium text-ink">
+                  {driver.firstName} {driver.lastName}
+                </span>{" "}
+                · <span className="text-ink">{driver.email}</span> (
+                {driver.id}).
+              </>
+            ) : (
+              <> Sign in with Google to commit.</>
+            )}
+          </p>
+          {!driver ? (
+            <div className="mt-6">
+              <SignInButton />
+            </div>
+          ) : null}
         </div>
-      )}
+        <div className="w-full max-w-xl justify-self-end md:max-w-none">
+          <Image
+            src="/car-illustration.png"
+            alt="Vaya car illustration"
+            width={1600}
+            height={600}
+            className="h-auto w-full"
+            priority
+          />
+        </div>
+      </section>
+
+      <section className="w-full px-6 py-8 md:px-14 md:py-10">
+        {bookable.length === 0 ? (
+          <p className="text-mid">No bookable vehicles right now.</p>
+        ) : (
+          <div className="w-full overflow-x-auto border border-rule">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-rule">
+                <tr>
+                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                    Vehicle
+                  </th>
+                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                    Dealer
+                  </th>
+                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                    List price
+                  </th>
+                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                    Picture
+                  </th>
+                  <th className="px-4 py-3 font-mono text-[0.65rem] font-normal tracking-[0.14em] text-mid uppercase">
+                    Commit
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookable.map((v) => (
+                  <tr
+                    key={v.id}
+                    className="border-b border-rule last:border-0"
+                  >
+                    <td className="px-4 py-3.5">
+                      <div className="font-medium text-ink">
+                        {v.year} {v.make} {v.model}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[0.7rem] text-muted">
+                        {v.id} · VIN {v.vin} · {v.odometer.toLocaleString()} mi
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-mid">
+                      {v.dealer.city}, {v.dealer.state}
+                    </td>
+                    <td className="px-4 py-3.5 text-ink">
+                      {v.monthlyPrice != null ? `$${v.monthlyPrice}` : "—"}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <PictureButton
+                        vehicleLabel={`${v.year} ${v.make} ${v.model}`}
+                      />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {driver ? (
+                        <CommitForm vehicleId={v.id} plans={planOptions} />
+                      ) : (
+                        <span className="font-mono text-[0.65rem] tracking-[0.12em] text-muted uppercase">
+                          Sign in to commit
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

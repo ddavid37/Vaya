@@ -1,26 +1,31 @@
+import { createSubscription, SubscriptionError } from "@/lib/subscriptions";
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import {
-  createSubscription,
-  SubscriptionError,
-} from "@/lib/subscriptions";
 
 export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.driverId) {
+    return NextResponse.json(
+      { code: "UNAUTHORIZED", message: "Sign in with Google to commit" },
+      { status: 401 },
+    );
+  }
+
   const body = (await req.json()) as {
-    driverId?: string;
     vehicleId?: string;
     planId?: string;
   };
 
-  if (!body.driverId || !body.vehicleId || !body.planId) {
+  if (!body.vehicleId || !body.planId) {
     return NextResponse.json(
-      { code: "BAD_REQUEST", message: "driverId, vehicleId, planId required" },
+      { code: "BAD_REQUEST", message: "vehicleId, planId required" },
       { status: 400 },
     );
   }
 
   try {
     const result = await createSubscription({
-      driverId: body.driverId,
+      driverId: session.driverId,
       vehicleId: body.vehicleId,
       planId: body.planId,
     });

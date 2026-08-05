@@ -4,12 +4,10 @@ Engineering home assignment — car subscription marketplace (Part 1) + telemetr
 
 ## Status
 
-**Planning / architecture complete.** See:
+**Part 1 in progress.** Next.js + Postgres + Prisma scaffolding is wired up; models, seed logic, and UI features come next. See:
 
 - [`DECISIONS.md`](./DECISIONS.md) — architecture first, then forks and unspecified calls
 - [`PLAN.md`](./PLAN.md) — build order toward the two-command demo
-
-Application code is not started yet on this branch.
 
 ## Data
 
@@ -18,14 +16,14 @@ Assignment fixtures (load as-is, do not hand-clean):
 - `data/seed.json` — dealers, plans, vehicles, drivers, subscriptions, events
 - `data/feed.jsonl` — one month of vendor webhook/REST telemetry
 
-## Intended run (once built)
+## Run
 
 ```bash
 npm run setup
 npm run dev
 ```
 
-Built on **Linux**.
+`npm run setup` starts Postgres via Docker Compose, runs Prisma migrations, and seeds the database. Target OS is **Linux** (Docker Postgres also verified on macOS during development).
 
 ## Deliverables (assignment checklist)
 

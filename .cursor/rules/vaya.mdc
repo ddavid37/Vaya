@@ -4,16 +4,41 @@ alwaysApply: true
 ---
 # Vaya Take-Home Assignment
 
-## Goal
-Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judgment over features. Try not having so many files. I want each file to be meaningfull and to know why I'm doing it.
+## Source of truth (read before building)
+- **Assignment brief (required):** `Engineering_Home_Assignment.pdf` at the repo root — proprietary Vaya home assignment. Agents should read/re-read this PDF for goals, Part 1 vs Part 2 scope, deliverables (DECISIONS, HOW-I-BUILT-IT, telemetry memo, video), and what they grade (architecture and judgment over code volume).
+- **Our architecture choices:** `DECISIONS.md`
+- **Build order:** `PLAN.md`
+- **DB change log:** `DB.md` — every migration, seed transform, quarantine, or manual data fix
+
+When unsure what “done” means, prefer the PDF over assumptions. Do not invent requirements the brief does not ask for.
+
+## Product context (from the PDF)
+Vaya is a car subscription marketplace: one monthly price (insurance/maintenance included), cars from dealers, pilot ~15 cars. A car is a physical object — it exists once and cannot be in two agreements at the same time. Month-end charges must be defendable in an email.
+
+## Assignment goals (checklist)
+**Part 1 — Marketplace**
+1. Architecture first in DECISIONS (wider than the build; forks; where 15→5,000 snaps).
+2. Supply/demand: driver can see availability and commit; ops sees fleet state.
+3. Invariant: at most one live commitment per car; concurrent commits → one winner, sensible loser (not 500); demonstrate it.
+4. One mid-flight change done properly (we picked early end) with explainable “what’s owed” (ledger), no real payments required.
+5. Load assignment data as-is; do not hand-clean contradictions away.
+
+**Part 2 — Telemetry** (separate from marketplace tables/UI until we get there)
+- Ingest `feed.jsonl` as immutable events; device ≠ vehicle; dispute/ops screen for dirty miles.
+- Telemetry memo may matter more than the build polish.
+
+**Deliverables the PDF asks for:** running demo, DECISIONS, HOW-I-BUILT-IT (AI use, wrong outputs, throwaways, hand-checks), telemetry memo, ~10 min video.
+
+## Working style (this repo)
+Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judgment over features. Few files — each one meaningful and justified.
 
 ## Principles
 - Keep the architecture simple.
 - Do not over-engineer.
 - Prefer readability over abstraction.
-- Implement only what the assignment requires.
+- Implement only what the assignment (PDF) requires.
 - Explain important design decisions in DECISIONS.md.
-- Document every DB schema/data manipulation in DB.md (migrations, seed transforms, quarantines, manual fixes).
+- Document every DB schema/data manipulation in DB.md.
 
 ## Tech Stack
 - Next.js
@@ -23,8 +48,8 @@ Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judg
 - Python
 
 ## Data
-- `seed.json` is seed/reference data.
-- `feed.jsonl` is an append-only telemetry event stream.
+- `data/seed.json` — Part 1 seed/reference data (load as-is).
+- `data/feed.jsonl` — Part 2 append-only telemetry stream.
 - Never design the schema around the JSON structure.
 
 ## Code Style
@@ -42,6 +67,7 @@ Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judg
 
 ## Before Creating Code
 Ask:
+- Is this in the PDF / required for Part 1 or Part 2?
 - Is this necessary?
 - Can it be simpler?
 - Does it match the assignment?

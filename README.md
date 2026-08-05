@@ -2,15 +2,15 @@
 
 Car subscription marketplace (Part 1) + telemetry (Part 2).
 
+## Workflow
+
+Work directly on `main`. Commit and push to `origin/main` — **no feature branches, no pull requests** unless explicitly asked.
+
+See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md) (every DB change), and [`PLAN.md`](./PLAN.md).
+
 ## Stack
 
 Next.js (App Router), TypeScript, Prisma, Supabase Postgres.
-
-## Status
-
-Scaffold only — no schema or business logic yet.
-
-See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md) (every DB change), and [`PLAN.md`](./PLAN.md).
 
 ## Data
 

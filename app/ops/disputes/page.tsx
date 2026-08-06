@@ -3,6 +3,11 @@
 import { AiSummaryButton } from "@/components/AiSummaryButton";
 import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
+import {
+  drivingHealthFromFuel,
+  healthColor,
+} from "@/lib/driving-health";
+import { fuelByTransactionId } from "@/lib/fuel-from-raw";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +50,18 @@ export default async function DisputesPage({
         orderBy: { startAt: "asc" },
       })
     : [];
+
+  const fuelRows =
+    trips.length > 0
+      ? await db.telemetryRaw.findMany({
+          where: {
+            event: { in: ["tripEnd", "trip"] },
+            transactionId: { in: trips.map((t) => t.transactionId) },
+          },
+          select: { transactionId: true, payload: true },
+        })
+      : [];
+  const fuelMap = fuelByTransactionId(fuelRows);
 
   const trustedSum = trips.reduce((sum, t) => {
     const m = t.mileageDecision?.trustedMiles;
@@ -140,11 +157,7 @@ export default async function DisputesPage({
         >
           Load
         </button>
-        <AiSummaryButton
-          imei={imei}
-          from={sp.from}
-          to={sp.to}
-        />
+        <AiSummaryButton imei={imei} from={sp.from} to={sp.to} />
       </form>
 
       {!imei ? (
@@ -154,6 +167,19 @@ export default async function DisputesPage({
         </p>
       ) : (
         <>
+          <HandoverEvidence
+            imei={imei}
+            defaultVin={openVin}
+            confirms={confirms.map((c) => ({
+              id: c.id,
+              representorName: c.representorName,
+              vin: c.vin,
+              mileageRecorded: Number(c.mileageRecorded.toString()).toFixed(1),
+              createdAt:
+                c.createdAt.toISOString().replace("T", " ").slice(0, 16) + "Z",
+            }))}
+          />
+
           <section className="mt-10 grid gap-4 border border-rule p-5 md:grid-cols-3">
             <div>
               <p className="font-mono text-[0.6rem] tracking-[0.14em] text-mid uppercase">
@@ -248,6 +274,17 @@ export default async function DisputesPage({
                     : t.assemblyStatus === "COMPLETE"
                       ? "text-green-700"
                       : "text-mid";
+                  const miles =
+                    md?.trustedMiles != null
+                      ? Number(md.trustedMiles.toString())
+                      : t.tripDistance != null
+                        ? Number(t.tripDistance.toString())
+                        : null;
+                  const fuel = fuelMap.get(t.transactionId) ?? null;
+                  const health = drivingHealthFromFuel({
+                    miles,
+                    fuelConsumed: fuel,
+                  });
                   return (
                     <article
                       key={t.id}
@@ -269,6 +306,7 @@ export default async function DisputesPage({
                       <p className="mt-1 font-mono text-[0.7rem] text-muted">
                         odo {fmtMi(t.startOdometer)} → {fmtMi(t.endOdometer)} ·
                         tripDistance {fmtMi(t.tripDistance)}
+                        {fuel != null ? ` · fuelConsumed ${fuel}` : ""}
                       </p>
                       <div className="mt-3 border-t border-rule pt-3">
                         <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
@@ -279,6 +317,22 @@ export default async function DisputesPage({
                         </p>
                         <p className="mt-0.5 text-[0.7rem] text-muted">
                           Feed has no driver identity on trip events.
+                        </p>
+                      </div>
+                      <div className="mt-3 border-t border-rule pt-3">
+                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
+                          Driving health · fuel
+                        </p>
+                        <p
+                          className={`mt-1 font-mono text-[0.75rem] uppercase ${healthColor(health.health)}`}
+                        >
+                          {health.health}
+                        </p>
+                        <p className="mt-0.5 text-[0.7rem] text-muted">
+                          {health.label}
+                          {fuel != null
+                            ? ` · fuelConsumed ${fuel} from tripEnd`
+                            : ""}
                         </p>
                       </div>
                       {t.flags.length > 0 ? (
@@ -303,18 +357,6 @@ export default async function DisputesPage({
               </div>
             )}
           </section>
-
-          <HandoverEvidence
-            imei={imei}
-            defaultVin={openVin}
-            confirms={confirms.map((c) => ({
-              id: c.id,
-              representorName: c.representorName,
-              vin: c.vin,
-              mileageRecorded: Number(c.mileageRecorded.toString()).toFixed(1),
-              createdAt: c.createdAt.toISOString().replace("T", " ").slice(0, 16) + "Z",
-            }))}
-          />
         </>
       )}
     </main>

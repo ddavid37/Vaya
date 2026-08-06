@@ -114,22 +114,8 @@ export function AppHeader({
           </nav>
         </div>
 
-        <h1 className="pointer-events-none text-center font-sans text-[1.05rem] leading-tight font-bold tracking-[-0.02em] text-ink uppercase md:text-[1.35rem] lg:text-[1.6rem]">
-          {part === "part1" ? (
-            <>
-              Part 1
-              <span className="mt-1 block font-mono text-[0.55rem] font-normal tracking-[0.16em] text-mid normal-case md:text-[0.6rem]">
-                Marketplace
-              </span>
-            </>
-          ) : (
-            <>
-              Part 2
-              <span className="mt-1 block font-mono text-[0.55rem] font-normal tracking-[0.16em] text-mid normal-case md:text-[0.6rem]">
-                Telemetry
-              </span>
-            </>
-          )}
+        <h1 className="pointer-events-none text-center font-sans text-[1.15rem] leading-none font-bold tracking-[-0.02em] text-ink uppercase md:text-[1.5rem] lg:text-[1.75rem]">
+          {part === "part1" ? "Marketplace" : "Telemetry"}
         </h1>
 
         <div className="flex flex-col items-end gap-1.5 justify-self-end">

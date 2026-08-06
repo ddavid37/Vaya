@@ -1,5 +1,5 @@
-// Part 1 marketplace schema (domain-first).
-// Telemetry tables are intentionally omitted until Part 2.
+// Part 1 marketplace + Part 2 telemetry schema (domain-first).
+// Marketplace and telemetry are separate: feed VINs do not match seed VINs.
 // Seed/feed JSON shapes must not dictate this model.
 
 generator client {
@@ -43,6 +43,21 @@ enum ConflictType {
   VEHICLE_STATUS_MISMATCH
   PRICE_MISMATCH
   ODOMETER_IMPOSSIBILITY
+}
+
+enum TripAssemblyStatus {
+  OPEN
+  COMPLETE
+  METRICS_DELAYED
+  IMPOSSIBLE_ODOMETER
+  INCOMPLETE
+}
+
+/// Which input MileageDecision trusted for billable miles.
+enum MileageSource {
+  ODOMETER_DELTA
+  TRIP_DISTANCE
+  NONE
 }
 
 // --- catalog / fleet ---
@@ -174,4 +189,96 @@ model DataConflict {
   createdAt   DateTime     @default(now()) @map("created_at")
 
   @@map("data_conflicts")
+}
+
+// --- Part 2 telemetry (device-keyed; no FK into marketplace vehicles) ---
+
+/// Telematics unit. Identity = IMEI. A device can move between cars.
+model Device {
+  imei        String                    @id
+  firstSeenAt DateTime                  @map("first_seen_at")
+  lastSeenAt  DateTime                  @map("last_seen_at")
+  assignments DeviceVehicleAssignment[]
+  rawEvents   TelemetryRaw[]
+  trips       Trip[]
+
+  @@map("devices")
+}
+
+/// Time-bounded IMEI ↔ VIN binding. Closed on vinChange or explicit end.
+model DeviceVehicleAssignment {
+  id        String    @id @default(cuid())
+  imei      String
+  device    Device    @relation(fields: [imei], references: [imei])
+  vin       String
+  startedAt DateTime  @map("started_at")
+  endedAt   DateTime? @map("ended_at")
+  /// Raw event natural key that opened this interval (e.g. vinChange / first trip).
+  openedBy  String?   @map("opened_by")
+  closedBy  String?   @map("closed_by")
+
+  @@index([imei, startedAt])
+  @@index([vin, startedAt])
+  @@map("device_vehicle_assignments")
+}
+
+/// Exact vendor payload, append-only. Idempotent on naturalKey.
+model TelemetryRaw {
+  id            String    @id @default(cuid())
+  /// Deterministic idempotency key (source|event|deliveredAt|imei|transactionId|…).
+  naturalKey    String    @unique @map("natural_key")
+  deliveredAt   DateTime  @map("delivered_at")
+  source        String
+  event         String
+  imei          String?
+  device        Device?   @relation(fields: [imei], references: [imei])
+  transactionId String?   @map("transaction_id")
+  eventAt       DateTime? @map("event_at")
+  payload       Json
+  ingestedAt    DateTime  @default(now()) @map("ingested_at")
+
+  @@index([imei, deliveredAt])
+  @@index([transactionId])
+  @@index([event, deliveredAt])
+  @@map("telemetry_raw")
+}
+
+/// Assembled billing/ops unit from tripStart/End/Metrics (and REST trip).
+model Trip {
+  id              String             @id @default(cuid())
+  transactionId   String             @unique @map("transaction_id")
+  imei            String
+  device          Device             @relation(fields: [imei], references: [imei])
+  /// VIN at assembly time (from fragments or active assignment). Not a marketplace FK.
+  vin             String?
+  startAt         DateTime?          @map("start_at")
+  endAt           DateTime?          @map("end_at")
+  startOdometer   Decimal?           @map("start_odometer") @db.Decimal(12, 3)
+  endOdometer     Decimal?           @map("end_odometer") @db.Decimal(12, 3)
+  tripDistance    Decimal?           @map("trip_distance") @db.Decimal(12, 3)
+  assemblyStatus  TripAssemblyStatus @map("assembly_status")
+  /// e.g. webhook fragments, rest snapshot, delayed metrics.
+  flags           String[]           @default([])
+  notes           String?
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  mileageDecision MileageDecision?
+
+  @@index([imei, startAt])
+  @@index([vin, startAt])
+  @@map("trips")
+}
+
+/// Billable miles for a trip — which inputs we trusted, which we discarded, why.
+model MileageDecision {
+  id              String        @id @default(cuid())
+  tripId          String        @unique @map("trip_id")
+  trip            Trip          @relation(fields: [tripId], references: [id])
+  trustedMiles    Decimal?      @map("trusted_miles") @db.Decimal(12, 3)
+  source          MileageSource
+  /// Structured discard notes (odometer delta, tripDistance, etc.).
+  discardedInputs Json          @map("discarded_inputs")
+  rationale       String
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("mileage_decisions")
 }

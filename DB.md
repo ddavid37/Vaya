@@ -65,6 +65,28 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
+## 2026-08-06 — Telemetry schema migrate (Part 2)
+
+**Action:** Applied Prisma migration `20260806145111_telemetry_init` to Supabase.
+
+**Tables created:** `devices`, `device_vehicle_assignments`, `telemetry_raw`, `trips`, `mileage_decisions`.
+
+**Enums added:** `TripAssemblyStatus`, `MileageSource`.
+
+**Why:** Part 2 device-keyed telemetry, separate from marketplace. No FK from trips/assignments into `vehicles` — feed VINs do not appear in seed (parallel dataset; see `DECISIONS.md`).
+
+**Design notes:**
+- `devices.imei` is the identity.
+- `telemetry_raw.natural_key` unique for idempotent ingest.
+- `trips.transaction_id` unique; assembly status + flags for delayed/impossible cases.
+- `mileage_decisions` stores trusted miles + provenance (never silent average).
+
+**Marketplace tables:** untouched.
+
+**Reversible?** `prisma migrate` rollback / drop those five tables + two enums (not done routinely).
+
+---
+
 ## Template for future entries
 
 ```md

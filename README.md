@@ -6,7 +6,9 @@ Car subscription marketplace (Part 1) + telemetry (Part 2).
 
 Work directly on `main`. After **every** change in this project: **commit and push** to `origin/main` — no waiting to batch. **No feature branches, no pull requests** unless explicitly asked.
 
-See [`DECISIONS.md`](./DECISIONS.md), [`DB.md`](./DB.md), [`HOW-I-BUILT-IT.md`](./HOW-I-BUILT-IT.md), and [`PLAN.md`](./PLAN.md).
+## Status
+
+Part 1 marketplace is live. Part 2 telemetry **schema** is migrated (ingest + dispute UI next).
 
 ## Stack
 

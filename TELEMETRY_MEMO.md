@@ -1,206 +1,100 @@
-<!-- What we learned from living with feed.jsonl — Part 2 telemetry memo. -->
+<!-- What we learned from living with feed.jsonl — Part 2 telemetry memo (≤ ~2 pages). -->
 
 # Telemetry memo
 
-What the feed taught us, what we will defend in an email, and what we still cannot answer.
-
-Vaya’s pilot pain is not “we lack dashboards.” It is three costs: **billing** pinned to two handwritten odometer reads months apart; **insurance** priced as one fleet rate because we cannot describe how anyone drives; and **operations blind spots** (when damage happened, who was driving, a car sitting outside plan area). This memo is the judgment after living with `feed.jsonl` — not a feature list.
+Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Source for everything below: `data/feed.jsonl`, `data/seed.json` (dealers in NJ), public vendor price sheets/writeups noted in §2. **Guess** = not confirmed on a primary quote.
 
 ---
 
-## Setup
+## 1. Map what is actually possible
 
-- Source: `data/feed.jsonl` (~130 lines), batch-ingested (`npm run db:ingest`) then assembled (`npm run db:assemble`).
-- Identity for motion is **IMEI** (device), not marketplace vehicle id.
-- Feed VINs **do not appear** in `seed.json` (0 overlap). We treat telemetry as a **parallel pilot dataset** and do not fabricate joins into Part 1 subscriptions. That honesty costs a single-pane “this subscriber’s overage from the dongle” demo — inventing the join would be worse.
+Ways to get data out of a car are **not** the same product at different prices.
 
----
-
-## 1. Routes — what is actually possible
-
-There is more than one way to get data out of a car. They are **not** variations on one “miles API.” Each route has different physics, failure modes, and a hard ceiling on what it can ever prove.
-
-| Route | What it can deliver | What it cannot | In this feed |
-|---|---|---|---|
-| **A. Human odometer at handover / return** | Two numbers months apart; period delta for a clipboard invoice | Continuous trips, who drove mid-term, when damage happened, where the car sat | Still how the $252 vignette is pinned today; we log confirms on Review as a second reading, not as truth |
-| **B. Dongle trip envelope** (`tripStart` / `tripEnd`, keyed by IMEI) | Time-bounded start/end odometer, fuel on end, VIN when the webhook includes it | Proof of *which person* drove; stable vehicle identity if the dongle moves | Dominant path; `vinChange` on IMEI `…003` proves device ≠ vehicle |
-| **C. Vendor trip aggregate** (`tripMetrics`: `tripDistance`, speeds, hard events, idle, `tripTime`) | Behavior + a second distance estimate for the same `transactionId` | A replacement for odometer when they disagree; a location history | Arrives late after disconnects (IMEI `…002`); not the same sensor as (B) |
-| **D. REST `trip` pull** | Compact trip-shaped payload when webhook was missed | Often no VIN; often incomplete odometer — same trip, thinner evidence | Normalized into the same `trips` row; VIN may come from assignment |
-| **E. Sparse GPS crumbs** (`tripData`) | Occasional lat/lon/speed samples (e.g. a handful of points over minutes) | Continuous track, “sat 90 mi outside plan for three weeks,” or inventable trips | 3 events in the file; store raw only — **not** trips |
-| **F. Health flags** (`mil`, `battery`) | Fault / power signals for ops | Billing miles or how carefully someone drives | Present; out of invoice scope |
-| **G. Delivery channel** (webhook vs REST, connect/disconnect) | How and when fragments arrived | New physical facts about the car | Explains `METRICS_DELAYED` and burst catch-up — ops metadata, not a mile source |
-
-**Unavailable at any price from this class of feed** (not “we didn’t build the UI”):
-
-- Authenticated **driver identity** on a trip (no key fob / app / biometric in the stream)
-- **Damage / condition clock** (no before/after imagery or body sensors)
-- **Continuous geofence presence** (crumbs ≠ a month of whereabouts)
-- A guaranteed **device↔VIN** bond without assignment discipline (`vinChange` exists because the bond can break)
-- A single “miles” number that is simultaneously odometer truth and vendor `tripDistance` — they disagree by ~0.5–1.5 mi on clean trips; averaging invents a third fiction
-
-Policy below only chooses among routes that can actually deliver miles. It does not pretend (E)–(G) or driver/damage channels exist.
-
----
-
-## 2. Cost it — fifteen cars, first year
-
-**Assumed stack** (matches routes B/C/E in the feed): one OBD/cellular gateway per car + vendor platform that emits trip envelopes, trip metrics, and occasional GPS crumbs. **No dashcams** in the base case (cameras are a different product; this feed does not include them). The feed does not name a vendor, so dollars below are a **pilot budget model**, not a signed quote.
-
-### What we confirmed vs guessed
-
-| Claim | Status | Note |
+| Route | Can deliver | Cannot deliver |
 |---|---|---|
-| Major fleet platforms (Samsara, Geotab-class) do **not** post a simple commercial $/vehicle on the marketing site — you get a quote | **Confirmed** | Public pricing pages are quote/funnel; reseller-led |
-| Samsara Sourcewell cooperative list: Vehicle Gateway license **$39 / vehicle / month** (LIC-VG-ENT); public-sector lighter SKU **$23** | **Confirmed** (published cooperative sheet, cited in 2026 industry writeups) | Government path, not Vaya’s likely commercial quote |
-| Geotab-class commercial SaaS often lands ~**$25–40 / vehicle / month** via resellers | **Guess band** (secondary reviews / reseller commentary) | Package depth varies |
-| Hardware gateway often ~**$80–150** one-time when not bundled | **Guess band** | Sometimes amortized into the monthly |
-| Install on a dealer lot, spare pool, ops time, our assemble/dispute stack | **Guess** | Never on the vendor sticker |
+| **A. Human odo at handover/return** | Period clipboard miles | Trips, driver, damage time, location |
+| **B. Dongle trip envelope** (`tripStart`/`tripEnd`, IMEI) | Start/end odometer, fuel, VIN when present | Who drove; stable car if dongle moves |
+| **C. Vendor trip metrics** (`tripMetrics`) | `tripDistance`, hard brake/accel, idle, speeds | Location history; same as odometer when they disagree |
+| **D. REST `trip` pull** | Catch-up trip shape | Often no VIN / thin odo |
+| **E. Sparse GPS** (`tripData`) | A few lat/lon points | Continuous track or “outside plan for 3 weeks” |
+| **F. MIL / battery** | Health flags | Miles or driving quality |
+| **G. Delivery** (webhook/REST/disconnect) | When fragments arrived | New facts about the car |
 
-### Working numbers (mid case) — label: mostly guessed
+**Unavailable at any price on this feed class:** authenticated driver, damage/condition clock, continuous geofence, guaranteed device↔VIN without assignment, one blended “true miles” (odo and `tripDistance` differ ~0.5–1.5 mi on clean trips — *read in feed*).
 
-All figures USD. “Per car / month (year-1)” amortizes one-time items over 12 months.
+---
 
-| Line item | On vendor pricing page? | Amount | Fleet (15) year-1 | Per car / mo year-1 | Confirmed / Guess |
-|---|---|---|---|---|---|
-| Platform SaaS (trip + metrics, no cam) | Partially — quote only commercially; **$39** is a confirmed *gov list* anchor | **$32** / car / mo | $5,760 | $32.00 | **Guess** (inside $25–40 band; not our quote) |
-| Gateway hardware | Sometimes separate | **$125** / car once | $1,875 | $10.42 | **Guess** |
-| Install / move at lot (incl. `vinChange` swaps) | No | **$75** / car once + **$200** fleet contingency | $1,325 | $7.36 | **Guess** |
-| Spare dongles (failures / swaps) | No | **2** units @ $125 | $250 | $1.39 | **Guess** (feed shows device moves; buy spares) |
-| Ops labor (reconnect bursts, assignment hygiene, dispute minutes) | No | **~2 hr / mo** @ $50 loaded | $1,200 | $6.67 | **Guess** (IMEI `…002` delay pattern is real; hours are not) |
-| Vaya ingest / assemble / dispute tooling + webhook host (pilot year) | No | **~$250 / mo** shared | $3,000 | $16.67 | **Guess** (eng+infra; not vendor SaaS) |
-| **Total mid case** | | | **~$13,410** | **~$74.50** | Blended |
+## 2. Cost it — 15 cars, first year
 
-**Per car, per month, first year (mid): ~$75.**  
-**Fifteen cars, first year (mid): ~$13.4k.**
+**Stack:** one gateway/car + platform for B+C+E, **no cameras**. Feed vendor unnamed → budget model, not a signed quote.
 
-### Band (still guesses)
-
-| Case | $/car/mo year-1 | 15-car year-1 | What changed |
+| Line | $/car/mo year-1 | Confirmed / Guess | Where the number came from |
 |---|---|---|---|
-| Low | ~$50 | ~$9k | SaaS nearer $22, cheap install, lighter eng |
-| Mid (above) | ~$75 | ~$13.4k | Working case |
-| High (still no cams) | ~$110 | ~$20k | SaaS nearer $45, more dispute/ops load, pricier hardware |
-
-Adding dual-facing AI cams (often **+$40–55 / mo** on published gov sheets, hardware extra) would jump the pilot sharply and still would **not** appear in `feed.jsonl` — out of this base cost.
-
-### What this buys vs what it does not
-
-~$75/car/mo year-1 buys routes **B+C** (defendable trip miles + behavior signals) and sparse **E**. It does **not** buy driver identity, damage clocks, or continuous geofence — those are unavailable on this feed class, not a line item we forgot.
-
-**Before committing:** get a named commercial quote for 15 gateways (hardware included or not, install, term, overage for API/webhooks) and replace every **Guess** SaaS/hardware row. Ops and Vaya tooling rows will remain internal estimates.
+| Platform SaaS | **$32** | **Guess** (band $25–40) | Reseller/commercial ranges in 2026 industry writeups; majors are quote-only on marketing sites |
+| Gov list anchor (not our quote) | $39 VG license | **Confirmed** | Samsara Sourcewell-style cooperative sheet (LIC-VG-ENT) via published writeups |
+| Hardware amortized | **~$10** ($125÷12) | **Guess** | Typical gateway ~$80–150 in reseller commentary |
+| Install + swap contingency | **~$7** | **Guess** | Not on pricing pages; lot labor |
+| Spares (2 units / 15) | **~$1** | **Guess** | Feed shows `vinChange` — need spares |
+| Ops labor (reconnect/dispute) | **~$7** | **Guess** | ~2 hr/mo @ $50; pattern from IMEI `…002` delay, hours not measured |
+| Our ingest/dispute tooling | **~$17** | **Guess** | Internal pilot eng+host ~$250/mo ÷ 15 |
+| **Mid total** | **~$75 / car / mo** | Blended | **~$13.4k** fleet year-1 |
+| Low / high (no cams) | ~$50 / ~$110 | Guess | SaaS+labor swing |
 
 ---
 
 ## 3. What is worth paying for
 
-The cheap end of this market (~$10–20/car/mo class trackers) and the expensive end (full platform + AI cams, often several× that) are not “more of the same miles.” They buy different **physical capabilities**. Pricing pages bury that. For Vaya’s three costs, here is the cut I would make.
+Cheap trackers and cam-heavy platforms differ by **several times per car**. For Vaya:
 
-### Pay for (worth the step up from cheap GPS)
+**Pay for:** trip odometer (B), trip metrics on same `transactionId` (C), reconnect/API so days are not lost (G), device-move events (`vinChange`), raw export we can store. These defend overage and start an insurance *conversation*.
 
-| Capability | Why it is worth money for Vaya | Evidence from living with the feed |
-|---|---|---|
-| **Trip-bounded odometer start/end** (route B), not only a live map pin | Overage disputes need reconstructible period miles with provenance — a breadcrumb map does not defend $252 | Clean trips disagree odo vs `tripDistance` by ~0.5–1.5 mi; we need both inputs and a rule, not a single “distance” tile |
-| **Vendor trip metrics on the same `transactionId`** (route C): hard brake/accel, idle, speeds, second distance | Insurance conversation needs *how they drive*, not only *that they moved*; also fallback miles when odo is impossible | TX-480041; hard-event fields are what Signals/health use |
-| **Reliable delivery + reconnect semantics** (route G): webhooks, REST backfill, disconnect/connect | Cheap devices that drop days of trips recreate handwriting risk in software | IMEI `…002` Jul 9–11 burst; without catch-up we under-bill or invent |
-| **Device↔vehicle change events** (`vinChange`) or equivalent assignment support | Dongles move; paying for “VIN forever” without this corrupts invoices | IMEI `…003` Jul 17 cliff |
-| **Raw event export / API we can store immutably** | Dispute email needs *our* ledger over vendor UI screenshots | Entire Part 2 design: `telemetry_raw` → decisions |
+**Do not pay for (year-1):** AI dashcams, coaching/map theater, ELD/IFTA truck bundles, geofence SKUs on sparse GPS, vendor black-box “driver score” as underwriting.
 
-These are the features that justify leaving the bottom of the market. If a quote is cheap but missing trip odometer + metrics + reconnect/API, it is not cheap — it fails billing.
-
-### Do not pay for (yet) — expensive SKUs that do not buy our pilot outcomes
-
-| Capability | Why I would not pay in year-1 pilot | Caveat |
-|---|---|---|
-| **AI dual-facing dashcams** (+ often ~$40–55/mo on published gov add-ons, plus hardware) | Do not fix odometer provenance; do not appear in this feed; “who was driving” still needs a process (fob/app), not only a face video we are not staffed to review | Revisit if damage disputes dominate losses *and* we staff review |
-| **Pretty fleet maps / coaching gamification** as the core SKU | Map theater does not write `mileage_decisions`; coaching is not an insurer filing | Fine as freebie; not a reason to 2× the contract |
-| **ELD / IFTA / CMV compliance bundles** | Subscription cars are not a trucking compliance problem | Do not buy truck SKUs for a car pilot |
-| **“Continuous geofence / stolen vehicle” premium tiers** that assume dense GPS | This feed’s `tripData` is sparse crumbs — paying for geofence theater without denser sampling is buying a checkbox | If plan-area abuse is real, pay for **dense GPS or parked-location check-ins**, not a marketing geofence on crumbs |
-| **Vendor “driver score” as underwriting** | Black-box scores we cannot explain lose the renewal argument the same way handwriting loses overage | Prefer exportable hard-event rates we can defend; score in-house if needed |
-| **Cabin / identity biometrics** | Not on the menu of this device class at any reasonable pilot price | Driver ID is a product decision (app unlock / fob), not a pricier dongle tier |
-
-### The gap, in one sentence
-
-**Worth paying for:** durable trip truth (odo + metrics + delivery + device moves) we can store and explain. **Not worth paying for (first):** cameras, coaching polish, compliance bundles, and geofence theater that do not change the overage email or the insurer conversation.
-
-Aim the commercial quote at the **mid stack in §2** (~$25–40/mo SaaS class with gateway), not the tracker floor and not the cam-heavy ceiling — unless a later loss review proves damage/identity pays for cameras.
+**Target quote:** mid SaaS (~$25–40/mo) + gateway — not the floor, not the cam ceiling.
 
 ---
 
-## Billing — replace “a number somebody typed”
+## 4. Decide
 
-The brief’s overage vignette (6,840 driven, 840 over, $252 at $0.30/mi) is the email we must eventually defend. Route (A) still exists in the real world; routes (B)+(C) make **period miles** reconstructible trip-by-trip with provenance, so a dispute is not only “our clipboard vs their memory.”
+**Recommendation: instrument the 15-car pilot with a mid-tier gateway + API (routes B+C+G), and attack billing first.**
 
-### Device ≠ vehicle (route B breaks without this)
-
-IMEI `…003` has an explicit `vinChange` (Jul 17): `JM1BPBLM4P1000333` → `3FMCR9B65PR000444`, with an odometer cliff (~34428 → ~12703). Billing “one VIN forever under this dongle” would put post-move miles on the wrong car’s invoice.
-
-**Handling:** time-bounded `device_vehicle_assignments`. Trips resolve VIN from fragments or the open assignment at `startAt`. We never sum miles across the VIN boundary into one vehicle bucket without that split.
-
-### Mileage policy — choosing between (B) and (C)
-
-| Situation | Trust | Discard |
-|---|---|---|
-| Monotonic start/end odometer | Odometer delta (B) | `tripDistance` (C) — recorded, not blended |
-| End odo &lt; start (e.g. **TX-480041**) | `tripDistance` when present | Odometer delta |
-| Incomplete odometer (common on REST `trip`) | `tripDistance` | — |
-| Neither usable | None | Both |
-
-Every trip gets a `mileage_decisions` row with `source`, `trusted_miles`, `discarded_inputs`, and a human `rationale` (`lib/mileage.ts`). Ops reads that on `/ops/disputes`. Period trusted miles = sum of those decisions for the IMEI/window.
-
----
-
-## Failure modes we actually saw
-
-| Mode | In the feed | What we do |
-|---|---|---|
-| Device moved | `vinChange` on IMEI `…003` | Close/open assignment intervals |
-| Disconnect / delayed metrics | IMEI `…002` Jul 9–11 | Store raw; flag `METRICS_DELAYED` when metrics arrive ≫ after end |
-| Out-of-order / impossible odo | TX-480041 end &lt; start | Prefer tripDistance; status `IMPOSSIBLE_ODOMETER` |
-| Duplicate fragments | Extra `tripEnd` / revised metrics | Distinct `natural_key` by `deliveredAt`; last delivered wins for metrics with flags |
-| REST vs webhook | REST `trip` often no VIN | Same `trips` row; VIN from assignment when needed |
-| Sparse GPS | `tripData` breadcrumbs | Raw only — **not** trips |
-| MIL / battery | Present | Raw only — out of invoice scope |
-
----
-
-## Insurance — route (C), not underwriting
-
-After the cars, insurance is the largest cost; today the book is one rate because we cannot tell careful from careless.
-
-Route (C) gives hard braking / hard acceleration, average and peak speed, idle share of trip time. We surface those plus a **demo composite driving health** on Review/Signals (`lib/driving-health.ts`) — enough to **rank devices in a pilot** and start a renewal conversation.
-
-It is **not** an insurer model: thresholds are heuristics; **driver is unknown** (unavailable on this feed); feed cars are not linked to Part 1 subscribers. Next real step is driver↔device binding and carrier-shaped aggregates (e.g. hard events per 100 trusted miles), not a prettier score.
-
----
-
-## What we still cannot answer
-
-| Situation from the brief | Route reality |
+| Cost | Stance |
 |---|---|
-| Overage dispute / “charge is wrong” | **Shape addressed** via (B)+(C) provenance on `/ops/disputes` (+ optional logged (A)). Full 6,840/$252 subscription email needs VIN↔subscription link we refuse to invent. |
-| Who was driving | **Unavailable at any price** on this feed |
-| When damage occurred | **Unavailable** — no condition channel; scan UI is placeholder only |
-| Car sat outside plan area for weeks | **Unavailable** from sparse (E); inventing geofences would fake certainty |
+| **Billing (B)** | **Attack now** — trip ledger + provenance replaces “a number somebody typed” for overage disputes |
+| **Insurance (I)** | **Leave rate change alone for now** — keep hard-event exports; do not buy cams or claim underwriting |
+| **Ops blind spots (O)** | **Leave alone for now** — driver/damage/geofence are unavailable or need denser GPS + process we do not have |
+
+**What changes what people pay:** overage still uses plan `overagePerMile` and period miles; telemetry changes **evidence**, not a silent new fee. Subscription T&Cs must already allow mileage measurement and billing from recorded odometer/trip data (and notice/consent for location if we later use GPS). **Assumption:** we operate where seed dealers are — **NJ / US** (`seed.json` cities Englewood, Hackensack, Paramus). Confirm counsel on NJ/US consumer + telematics disclosure before go-live; I am not a lawyer.
+
+**Not “do nothing”:** handwriting-only fails the brief’s dispute story. **Not “full platform”:** cameras and geofence theater do not buy billing defense.
 
 ---
 
-## Ops screens
+## 5. Prove before spending — close in a day
 
-- **`/ops/disputes`** — dispute view over (B)+(C): assignments, trips, trusted miles, rationale, critical metrics, idle, health. Does not invent miles.
-- **`/ops/signals`** — (C) rollups across devices. Sketch, not a carrier export.
+**Biggest question:** can mid-tier trip data defend one overage number better than handwriting?
 
----
+**Cheapest one-day close:**
 
-## What we would not ship as “truth”
-
-- Averaging odometer (B) and `tripDistance` (C)
-- Inventing trips or geofences from `tripData` (E)
-- Pretending feed cars are seed marketplace cars without a real link table
-- Ignoring `vinChange` and billing one continuous VIN under a dongle
-- Selling the driving-health heuristic as underwriting
+1. Morning: get a **written quote** for 15 gateways (SaaS + hardware + install + API/webhook) — replaces Guess SaaS/hardware.  
+2. Same day: pick **one IMEI** in `feed.jsonl`, sum trusted miles with our rule (odo when monotonic, else `tripDistance`), and write the dispute paragraph ops would send — compare to a single handwritten period total.  
+3. If quote ≤ ~$40/car/mo SaaS and the paragraph is explainable trip-by-trip → buy mid-tier. If API/raw export missing or miles not trip-bounded → walk away.
 
 ---
 
-## Scale note (15 → 5,000)
+## 6. One thing I refuse to build
 
-Sync batch ingest + in-process assembly is fine for this file. At fleet scale, keep `telemetry_raw` identical and move assembly to async workers first — the dispute schema (trip + mileage decision + assignment intervals) stays.
+**Refuse: a “smart miles” blend that averages odometer delta with `tripDistance` (or invents trips/geofences from sparse `tripData`).**
+
+It looks fair on a pricing slide and loses the first real dispute. Other candidates I also will not build yet: VIN↔subscription fiction across feed/seed with 0 overlap; selling our composite driving-health score as insurer truth.
+
+---
+
+## Traceability (short)
+
+| Fact | Source |
+|---|---|
+| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData` | `data/feed.jsonl` |
+| Dealers NJ | `data/seed.json` |
+| $39 VG gov list; commercial quote-only; $25–40 band | Public cooperative sheet / 2026 industry pricing writeups — **not** a Vaya vendor quote |
+| $/car mid ~$75 year-1 | **Mostly Guess** (§2) |

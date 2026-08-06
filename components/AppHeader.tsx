@@ -45,7 +45,7 @@ export function AppHeader({
         <div className="flex min-w-0 items-center gap-4 md:gap-6">
           <Link
             href={part === "part1" ? "/" : "/ops/disputes"}
-            className="shrink-0 no-underline"
+            className="flex shrink-0 items-baseline gap-1.5 no-underline md:gap-2"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -55,6 +55,9 @@ export function AppHeader({
               height={23}
               className="h-[18px] w-auto md:h-[23px]"
             />
+            <span className="font-sans text-[0.55rem] leading-none font-bold tracking-[-0.02em] text-ink uppercase md:text-[0.7rem]">
+              demo
+            </span>
           </Link>
           <nav
             className="flex flex-wrap items-center gap-2 md:gap-3"

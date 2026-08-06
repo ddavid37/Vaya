@@ -1,5 +1,6 @@
 // Part 2 product sketch: connect tripMetrics into average speed + acceleration score (placeholders).
 
+import { VehicleScanning } from "@/components/VehicleScanning";
 import { db } from "@/lib/db";
 import Link from "next/link";
 
@@ -17,9 +18,16 @@ type MetricsPayload = {
   };
 };
 
-/** Placeholder 0–100 score from hard accel/brake counts — not an insurer model. */
-function accelerationScore(hardAccel: number, hardBrake: number): number {
-  return Math.max(0, Math.min(100, 100 - hardAccel * 8 - hardBrake * 5));
+/** Placeholder 0–100 from per-trip hard accel/brake averages — not an insurer model. */
+function accelerationScore(
+  hardAccel: number,
+  hardBrake: number,
+  samples: number,
+): number {
+  if (samples <= 0) return 0;
+  const a = hardAccel / samples;
+  const b = hardBrake / samples;
+  return Math.max(0, Math.min(100, Math.round(100 - a * 15 - b * 12)));
 }
 
 export default async function SignalsPage() {
@@ -118,7 +126,7 @@ export default async function SignalsPage() {
                   ? (b.avgSpeedSum / b.samples).toFixed(1)
                   : null;
               const score = b
-                ? accelerationScore(b.hardAccel, b.hardBrake)
+                ? accelerationScore(b.hardAccel, b.hardBrake, b.samples)
                 : null;
               return (
                 <tr key={d.imei} className="border-b border-rule last:border-0">
@@ -176,12 +184,18 @@ export default async function SignalsPage() {
             from webhook <code className="font-mono text-[0.75rem]">tripMetrics</code>.
           </li>
           <li>
+            <strong className="font-medium text-ink">Hard accel / brake</strong>{" "}
+            — sum of{" "}
+            <code className="font-mono text-[0.75rem]">hardAccelerationCounts</code>{" "}
+            /{" "}
+            <code className="font-mono text-[0.75rem]">hardBrakingCounts</code>{" "}
+            across those same <code className="font-mono text-[0.75rem]">tripMetrics</code>{" "}
+            events.
+          </li>
+          <li>
             <strong className="font-medium text-ink">Acceleration score</strong>{" "}
-            — placeholder:{" "}
-            <code className="font-mono text-[0.75rem]">
-              100 − 8×hardAccel − 5×hardBrake
-            </code>
-            , clamped 0–100. Not insurer-grade.
+            — placeholder from per-trip averages of those counts (not
+            insurer-grade).
           </li>
           <li>
             Driver identity is still{" "}
@@ -190,6 +204,8 @@ export default async function SignalsPage() {
           </li>
         </ul>
       </section>
+
+      <VehicleScanning />
     </main>
   );
 }

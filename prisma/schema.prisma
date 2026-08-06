@@ -280,3 +280,17 @@ model MileageDecision {
 
   @@map("mileage_decisions")
 }
+
+/// Handwritten-style overage evidence: ops records odometer at handover (not feed-derived).
+model ManualMileageConfirm {
+  id               String   @id @default(cuid())
+  imei             String?
+  vin              String
+  representorName  String   @map("representor_name")
+  mileageRecorded  Decimal  @map("mileage_recorded") @db.Decimal(12, 3)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([vin, createdAt])
+  @@index([imei, createdAt])
+  @@map("manual_mileage_confirms")
+}

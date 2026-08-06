@@ -30,9 +30,10 @@ export function AppHeader({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const part: AppPart = pathname.startsWith("/ops/disputes")
-    ? "part2"
-    : "part1";
+  const part: AppPart =
+    pathname.startsWith("/ops/disputes") || pathname.startsWith("/ops/signals")
+      ? "part2"
+      : "part1";
 
   function switchPart() {
     router.push(part === "part1" ? "/ops/disputes" : "/");
@@ -101,15 +102,26 @@ export function AppHeader({
                 </Link>
               </>
             ) : (
-              <Link
-                href="/ops/disputes"
-                className={tabClass(pathname.startsWith("/ops/disputes"))}
-                aria-current={
-                  pathname.startsWith("/ops/disputes") ? "page" : undefined
-                }
-              >
-                Disputes
-              </Link>
+              <>
+                <Link
+                  href="/ops/disputes"
+                  className={tabClass(pathname.startsWith("/ops/disputes"))}
+                  aria-current={
+                    pathname.startsWith("/ops/disputes") ? "page" : undefined
+                  }
+                >
+                  Review
+                </Link>
+                <Link
+                  href="/ops/signals"
+                  className={tabClass(pathname.startsWith("/ops/signals"))}
+                  aria-current={
+                    pathname.startsWith("/ops/signals") ? "page" : undefined
+                  }
+                >
+                  Signals
+                </Link>
+              </>
             )}
           </nav>
         </div>

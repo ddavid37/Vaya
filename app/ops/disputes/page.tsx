@@ -1,6 +1,7 @@
 // Ops disputes: explain trusted trip miles for an IMEI (and optional period) without inventing data.
 
 import { AiSummaryButton } from "@/components/AiSummaryButton";
+import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
 import Link from "next/link";
 
@@ -63,6 +64,21 @@ export default async function DisputesPage({
     ? await db.deviceVehicleAssignment.findMany({
         where: { imei },
         orderBy: { startedAt: "asc" },
+      })
+    : [];
+
+  const openVin =
+    assignments.find((a) => a.endedAt == null)?.vin ??
+    assignments[assignments.length - 1]?.vin ??
+    "";
+
+  const confirms = imei
+    ? await db.manualMileageConfirm.findMany({
+        where: openVin
+          ? { OR: [{ imei }, { vin: openVin }] }
+          : { imei },
+        orderBy: { createdAt: "desc" },
+        take: 12,
       })
     : [];
 
@@ -254,6 +270,17 @@ export default async function DisputesPage({
                         odo {fmtMi(t.startOdometer)} → {fmtMi(t.endOdometer)} ·
                         tripDistance {fmtMi(t.tripDistance)}
                       </p>
+                      <div className="mt-3 border-t border-rule pt-3">
+                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
+                          Driver
+                        </p>
+                        <p className="mt-1 font-mono text-[0.75rem] text-ink">
+                          unknown
+                        </p>
+                        <p className="mt-0.5 text-[0.7rem] text-muted">
+                          Feed has no driver identity on trip events.
+                        </p>
+                      </div>
                       {t.flags.length > 0 ? (
                         <p className="mt-2 font-mono text-[0.65rem] text-mid">
                           flags: {t.flags.join(", ")}
@@ -276,6 +303,18 @@ export default async function DisputesPage({
               </div>
             )}
           </section>
+
+          <HandoverEvidence
+            imei={imei}
+            defaultVin={openVin}
+            confirms={confirms.map((c) => ({
+              id: c.id,
+              representorName: c.representorName,
+              vin: c.vin,
+              mileageRecorded: Number(c.mileageRecorded.toString()).toFixed(1),
+              createdAt: c.createdAt.toISOString().replace("T", " ").slice(0, 16) + "Z",
+            }))}
+          />
         </>
       )}
     </main>

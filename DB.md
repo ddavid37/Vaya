@@ -122,6 +122,18 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
+## 2026-08-06 — Manual mileage confirms (handover evidence)
+
+**Action:** Added `manual_mileage_confirms` (`ManualMileageConfirm`) for ops handwritten-style overage evidence: representor name, mileage recorded, VIN (optional IMEI).
+
+**Why:** Address “only evidence was our own handwriting” with a logged confirmation next to feed-derived trusted miles. Vehicle scan before/after and client policy insurance stay UI placeholders (not persisted).
+
+**UI:** `/ops/disputes` handover sections; `/ops/signals` for avg speed / acceleration score sketch.
+
+**Reversible?** Drop table via migration rollback.
+
+---
+
 ## Template for future entries
 
 ```md

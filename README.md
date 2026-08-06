@@ -63,7 +63,8 @@ One header part at a time (toggle **Part 1** ↔ **Part 2** next to Sign in/out)
 - `/ops/conflicts` — seed/runtime conflict quarantine
 
 **Part 2 — Telemetry**
-- `/ops/disputes` — mileage disputes (IMEI → time-bounded VIN; trusted miles + provenance)
+- `/ops/disputes` — Mileage review (trips, driver unknown, manual confirm, scan/insurance placeholders, ★ AI)
+- `/ops/signals` — driving signals sketch (avg speed from tripMetrics; acceleration score placeholder)
 
 ## Layout
 

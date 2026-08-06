@@ -54,15 +54,15 @@ npm test
 
 ## App
 
-One header audience at a time (toggle **Driver view** ↔ **Operator view** next to Sign in/out).
+One header part at a time (toggle **Part 1** ↔ **Part 2** next to Sign in/out).
 
-**Driver view** (`/`, `/mine`)
+**Part 1 — Marketplace**
 - `/` — marketplace (Google sign-in + commit)
 - `/mine` — your commitments: early end (date picker) + ledger + monthly total
-
-**Operator view** (`/ops…`)
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
+
+**Part 2 — Telemetry**
 - `/ops/disputes` — mileage disputes (IMEI → time-bounded VIN; trusted miles + provenance)
 
 ## Layout

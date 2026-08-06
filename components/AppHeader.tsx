@@ -1,11 +1,11 @@
-// App header: centered audience title, active tab highlight, view switch left of Sign out.
+// App header: Part 1 (marketplace) vs Part 2 (telemetry), active tab highlight, switch left of Sign out.
 
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export type AppView = "driver" | "operator";
+export type AppPart = "part1" | "part2";
 
 const tabIdle =
   "font-mono text-[0.75rem] tracking-[0.14em] uppercase text-mid no-underline hover:text-orange focus-visible:text-orange focus-visible:outline-none transition-colors";
@@ -30,10 +30,12 @@ export function AppHeader({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const view: AppView = pathname.startsWith("/ops") ? "operator" : "driver";
+  const part: AppPart = pathname.startsWith("/ops/disputes")
+    ? "part2"
+    : "part1";
 
-  function switchView() {
-    router.push(view === "driver" ? "/ops" : "/");
+  function switchPart() {
+    router.push(part === "part1" ? "/ops/disputes" : "/");
   }
 
   return (
@@ -41,7 +43,7 @@ export function AppHeader({
       <div className="relative grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-5 md:gap-4 md:px-14 md:py-6">
         <div className="flex min-w-0 items-center gap-4 md:gap-6">
           <Link
-            href={view === "driver" ? "/" : "/ops"}
+            href={part === "part1" ? "/" : "/ops/disputes"}
             className="shrink-0 no-underline"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,9 +57,9 @@ export function AppHeader({
           </Link>
           <nav
             className="flex flex-wrap items-center gap-2 md:gap-3"
-            aria-label={view === "driver" ? "Driver tabs" : "Operator tabs"}
+            aria-label={part === "part1" ? "Part 1 tabs" : "Part 2 tabs"}
           >
-            {view === "driver" ? (
+            {part === "part1" ? (
               <>
                 <Link
                   href="/"
@@ -75,9 +77,6 @@ export function AppHeader({
                 >
                   My cars
                 </Link>
-              </>
-            ) : (
-              <>
                 <Link
                   href="/ops"
                   className={tabClass(
@@ -100,22 +99,37 @@ export function AppHeader({
                 >
                   Conflicts
                 </Link>
-                <Link
-                  href="/ops/disputes"
-                  className={tabClass(pathname.startsWith("/ops/disputes"))}
-                  aria-current={
-                    pathname.startsWith("/ops/disputes") ? "page" : undefined
-                  }
-                >
-                  Disputes
-                </Link>
               </>
+            ) : (
+              <Link
+                href="/ops/disputes"
+                className={tabClass(pathname.startsWith("/ops/disputes"))}
+                aria-current={
+                  pathname.startsWith("/ops/disputes") ? "page" : undefined
+                }
+              >
+                Disputes
+              </Link>
             )}
           </nav>
         </div>
 
-        <h1 className="pointer-events-none text-center font-sans text-[1.15rem] leading-none font-bold tracking-[-0.02em] text-ink uppercase md:text-[1.5rem] lg:text-[1.75rem]">
-          {view === "driver" ? "Driver view" : "Operator view"}
+        <h1 className="pointer-events-none text-center font-sans text-[1.05rem] leading-tight font-bold tracking-[-0.02em] text-ink uppercase md:text-[1.35rem] lg:text-[1.6rem]">
+          {part === "part1" ? (
+            <>
+              Part 1
+              <span className="mt-1 block font-mono text-[0.55rem] font-normal tracking-[0.16em] text-mid normal-case md:text-[0.6rem]">
+                Marketplace
+              </span>
+            </>
+          ) : (
+            <>
+              Part 2
+              <span className="mt-1 block font-mono text-[0.55rem] font-normal tracking-[0.16em] text-mid normal-case md:text-[0.6rem]">
+                Telemetry
+              </span>
+            </>
+          )}
         </h1>
 
         <div className="flex flex-col items-end gap-1.5 justify-self-end">
@@ -123,15 +137,13 @@ export function AppHeader({
             {userLabel}
             <button
               type="button"
-              onClick={switchView}
+              onClick={switchPart}
               className={switchBtn}
               aria-label={
-                view === "driver"
-                  ? "Switch to Operator view"
-                  : "Switch to Driver view"
+                part === "part1" ? "Switch to Part 2" : "Switch to Part 1"
               }
             >
-              {view === "driver" ? "Operator view" : "Driver view"}
+              {part === "part1" ? "Part 2" : "Part 1"}
             </button>
             {authButton}
           </div>

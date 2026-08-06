@@ -1,5 +1,6 @@
 // Ops disputes: explain trusted trip miles for an IMEI (and optional period) without inventing data.
 
+import { AiSummaryButton } from "@/components/AiSummaryButton";
 import { db } from "@/lib/db";
 import Link from "next/link";
 
@@ -123,6 +124,11 @@ export default async function DisputesPage({
         >
           Load
         </button>
+        <AiSummaryButton
+          imei={imei}
+          from={sp.from}
+          to={sp.to}
+        />
       </form>
 
       {!imei ? (

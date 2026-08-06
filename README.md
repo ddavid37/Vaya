@@ -21,7 +21,7 @@ Next.js (App Router), TypeScript, Prisma, Supabase Postgres, Auth.js (Google).
 
 ## Setup
 
-1. Copy `.env.example` → `.env`. Set `DATABASE_URL`, `AUTH_SECRET`, and Google OAuth vars (below).
+1. Copy `.env.example` → `.env` (or create `.env`). Set `DATABASE_URL`, `AUTH_SECRET`, Google OAuth vars, and optionally `OPENAI_API_KEY` for Disputes ★ AI summaries.
 2. Install, migrate, run:
 
 ```bash

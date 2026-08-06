@@ -87,9 +87,11 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 
 ## 6. One thing I refuse to build
 
-**Refuse: averaging odometer delta with `tripDistance` into a single “smart miles” number** (and the cousin move: inventing trips or geofences from sparse `tripData`).
+**Refuse: averaging odometer delta with `tripDistance` into one “smart miles” number.**
 
-It looks reasonable on a slide and loses the first real dispute — the feed already shows the two inputs disagree. That is the hard refuse.
+Meaning: the feed gives two different mile estimates for the same trip. I will not ship code (or an invoice) that secretly blends them and presents one number as truth. Pick one source per trip, record the other as discarded — or bill nothing for that trip. Same spirit: I will not invent trips/geofences from sparse `tripData`.
+
+Why this refuse (not another): it is the mistake that looks “fair” and still loses the overage email. (Other things I also will not build yet — fake feed↔seed joins, insurer “health scores” — are secondary.)
 
 ---
 

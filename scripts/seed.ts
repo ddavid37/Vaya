@@ -1,8 +1,5 @@
-/**
- * Load data/seed.json as-is into Postgres.
- * Quarantine dual-live losers as CONFLICTING; record data_conflicts.
- * Does not rewrite prices or drop rows.
- */
+// Load seed.json as-is into Postgres; quarantine dual-live rows and record data_conflicts.
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {

@@ -1,3 +1,5 @@
+<!-- Process notes for graders: demos, AI use, and key build choices. -->
+
 # How I built it
 
 Notes on process, AI use, and choices that matter for grading. Keep this short and honest.

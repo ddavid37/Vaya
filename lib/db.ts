@@ -1,3 +1,5 @@
+// Shared Prisma client singleton for server-side DB access.
+
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };

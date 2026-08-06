@@ -1,4 +1,5 @@
--- CreateEnum
+-- Part 2 telemetry tables and enums (devices, raw, assignments, trips, mileage decisions).
+
 CREATE TYPE "TripAssemblyStatus" AS ENUM ('OPEN', 'COMPLETE', 'METRICS_DELAYED', 'IMPOSSIBLE_ODOMETER', 'INCOMPLETE');
 
 -- CreateEnum

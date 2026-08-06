@@ -1,3 +1,5 @@
+<!-- Ordered implementation plan for Part 1 marketplace then Part 2 telemetry. -->
+
 # Implementation plan
 
 Ordered for a working demo early, then invariant hardness, then telemetry. Architecture rationale lives in `DECISIONS.md`.

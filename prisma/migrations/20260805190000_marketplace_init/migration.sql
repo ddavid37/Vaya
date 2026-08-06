@@ -1,4 +1,5 @@
--- CreateSchema
+-- Initial marketplace tables, enums, and one-live-sub partial unique index.
+
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum

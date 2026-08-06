@@ -1,5 +1,7 @@
 "use client";
 
+// Marketplace Picture button that opens a small unavailable-photo dialog.
+
 import { useEffect, useRef } from "react";
 import { useState } from "react";
 

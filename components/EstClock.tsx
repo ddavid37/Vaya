@@ -1,5 +1,7 @@
 "use client";
 
+// Client live date/time in America/New_York under the auth controls.
+
 import { useEffect, useState } from "react";
 
 function formatEst(now: Date) {

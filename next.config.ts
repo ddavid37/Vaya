@@ -1,3 +1,5 @@
+// Next.js app configuration.
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {

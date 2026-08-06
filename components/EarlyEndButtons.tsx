@@ -1,5 +1,7 @@
 "use client";
 
+// Ops client controls: schedule (+7d) or immediate early-end for a subscription.
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

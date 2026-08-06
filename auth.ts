@@ -1,3 +1,5 @@
+// Auth.js Google login: upsert Driver from profile and put driverId on the session JWT.
+
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { createHash } from "node:crypto";

@@ -1,3 +1,5 @@
+// Root layout: brand shell, nav, Google auth controls, EST clock.
+
 import type { Metadata } from "next";
 import { DM_Mono, Outfit } from "next/font/google";
 import Link from "next/link";

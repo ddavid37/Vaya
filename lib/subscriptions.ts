@@ -1,3 +1,5 @@
+// Domain logic for creating subscriptions and early-end with ledger lines.
+
 import {
   LedgerEntryType,
   Prisma,

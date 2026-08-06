@@ -62,6 +62,7 @@ Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judg
 - Avoid unnecessary dependencies.
 - Write self-explanatory code.
 - Use meaningful names.
+- Every source file (ts/tsx/css/prisma/sql/config, and project docs like DECISIONS/DB/PLAN/HOW-I-BUILT-IT) starts with a **one-line comment** stating the file’s goal. Skip assets, pictures, PDFs, and README. For `"use client"` modules, put the goal comment on the line after that directive.
 
 ## Architecture
 - Domain-first design.

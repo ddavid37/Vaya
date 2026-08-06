@@ -1,3 +1,5 @@
+// Ops fleet console: all vehicles, live/conflict truth, early-end actions.
+
 import { EarlyEndButtons } from "@/components/EarlyEndButtons";
 import { db } from "@/lib/db";
 

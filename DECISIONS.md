@@ -1,3 +1,5 @@
+<!-- Architecture and fork decisions for the Vaya take-home (wider than the build). -->
+
 # DECISIONS
 
 Stack: Next.js (App Router), TypeScript, Supabase Postgres, Prisma — path of least explanation per project rules.

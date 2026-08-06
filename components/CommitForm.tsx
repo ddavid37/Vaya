@@ -1,5 +1,7 @@
 "use client";
 
+// Client form: pick plan and commit a vehicle via the subscriptions API.
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

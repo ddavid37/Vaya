@@ -1,3 +1,5 @@
+// POST early-end a subscription (schedule or immediate) with ownership check when signed in.
+
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import {

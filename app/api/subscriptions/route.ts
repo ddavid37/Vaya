@@ -1,3 +1,5 @@
+// POST create subscription for the session driver (409 if car taken).
+
 import { createSubscription, SubscriptionError } from "@/lib/subscriptions";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";

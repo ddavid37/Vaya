@@ -1,6 +1,4 @@
-// Part 1 marketplace + Part 2 telemetry schema (domain-first).
-// Marketplace and telemetry are separate: feed VINs do not match seed VINs.
-// Seed/feed JSON shapes must not dictate this model.
+// Prisma schema: Part 1 marketplace + Part 2 device-keyed telemetry (no feed↔seed VIN FK).
 
 generator client {
   provider = "prisma-client-js"

@@ -1,3 +1,5 @@
+// Server actions: Sign in with Google / Sign out buttons.
+
 import { signIn, signOut } from "@/auth";
 
 export function SignInButton() {

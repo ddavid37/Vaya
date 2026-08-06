@@ -1,3 +1,5 @@
+// Ops conflicts: list seed/runtime quarantine decisions out loud.
+
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";

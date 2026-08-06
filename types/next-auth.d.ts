@@ -1,3 +1,5 @@
+// Extend Auth.js Session/JWT types with driverId.
+
 import "next-auth";
 import "next-auth/jwt";
 

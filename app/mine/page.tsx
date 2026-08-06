@@ -1,3 +1,5 @@
+// My cars: signed-in driver’s commitments, early-end manage UI, ledger, monthly total.
+
 import { auth } from "@/auth";
 import { SignInButton } from "@/components/AuthButtons";
 import { ManageSubscription } from "@/components/ManageSubscription";

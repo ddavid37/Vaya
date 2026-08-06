@@ -1,3 +1,5 @@
+<!-- Living log of every DB schema/data manipulation we make. -->
+
 # DB manipulations & decisions
 
 Living log of every database change we make (migrations, seed transforms, manual fixes, quarantines).  

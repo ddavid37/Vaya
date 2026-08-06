@@ -91,7 +91,7 @@ export default async function DisputesPage({
           <select
             name="imei"
             defaultValue={imei}
-            className="min-w-[16rem] border border-rule-s bg-white px-2 py-1.5 font-mono text-sm outline-none focus:border-orange"
+            className="min-w-[26rem] border border-rule-s bg-white px-2 py-1.5 font-mono text-sm outline-none focus:border-orange"
           >
             {devices.map((d) => (
               <option key={d.imei} value={d.imei}>

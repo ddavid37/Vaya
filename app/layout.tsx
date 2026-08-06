@@ -33,28 +33,29 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
 
-  const authRow = session?.user ? (
-    <>
-      <span className="hidden text-right sm:block">
-        <span className="block font-mono text-[0.6rem] tracking-[0.1em] text-ink uppercase">
-          {session.user.name ?? "Signed in"}
-        </span>
-        {session.user.email ? (
-          <span className="block font-mono text-[0.6rem] normal-case tracking-normal text-mid">
-            {session.user.email}
-          </span>
-        ) : null}
+  const userLabel = session?.user ? (
+    <span className="hidden text-right sm:block">
+      <span className="block font-mono text-[0.6rem] tracking-[0.1em] text-ink uppercase">
+        {session.user.name ?? "Signed in"}
       </span>
-      <SignOutButton />
-    </>
-  ) : (
-    <SignInButton />
-  );
+      {session.user.email ? (
+        <span className="block font-mono text-[0.6rem] normal-case tracking-normal text-mid">
+          {session.user.email}
+        </span>
+      ) : null}
+    </span>
+  ) : null;
+
+  const authButton = session?.user ? <SignOutButton /> : <SignInButton />;
 
   return (
     <html lang="en" className={`${outfit.variable} ${dmMono.variable}`}>
       <body className="min-h-screen bg-white font-sans text-ink antialiased">
-        <AppHeader authRow={authRow} clock={<EstClock />} />
+        <AppHeader
+          userLabel={userLabel}
+          authButton={authButton}
+          clock={<EstClock />}
+        />
         {children}
       </body>
     </html>

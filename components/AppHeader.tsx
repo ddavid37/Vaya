@@ -1,4 +1,4 @@
-// App header: one audience at a time (Driver vs Operator) with a switch next to auth.
+// App header: centered audience title, active tab highlight, view switch left of Sign out.
 
 "use client";
 
@@ -7,17 +7,25 @@ import { usePathname, useRouter } from "next/navigation";
 
 export type AppView = "driver" | "operator";
 
-const navLink =
+const tabIdle =
   "font-mono text-[0.65rem] tracking-[0.16em] uppercase text-mid no-underline hover:text-orange focus-visible:text-orange focus-visible:outline-none transition-colors";
+const tabActive =
+  "font-mono text-[0.65rem] tracking-[0.16em] uppercase text-orange no-underline focus-visible:outline-none";
 
 const switchBtn =
   "border border-rule-s px-3 py-1.5 font-mono text-[0.65rem] tracking-[0.14em] text-mid uppercase transition-colors hover:border-orange hover:text-orange";
 
+function tabClass(active: boolean) {
+  return active ? tabActive : tabIdle;
+}
+
 export function AppHeader({
-  authRow,
+  userLabel,
+  authButton,
   clock,
 }: {
-  authRow: React.ReactNode;
+  userLabel: React.ReactNode;
+  authButton: React.ReactNode;
   clock: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -30,68 +38,104 @@ export function AppHeader({
 
   return (
     <header className="border-b border-rule">
-      <div className="flex w-full items-center justify-between gap-4 px-6 py-5 md:px-14 md:py-6">
-        <Link href={view === "driver" ? "/" : "/ops"} className="no-underline">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/vaya-logo.svg"
-            alt="Vaya"
-            width={90}
-            height={23}
-            className="h-[18px] w-auto md:h-[23px]"
-          />
-        </Link>
-
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-4 md:gap-6">
-          <nav
-            className="flex flex-wrap items-center justify-end gap-2 md:gap-3"
-            aria-label={view === "driver" ? "Driver view" : "Operator view"}
+      <div className="relative grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 px-6 py-5 md:gap-4 md:px-14 md:py-6">
+        <div className="flex min-w-0 items-center gap-4 md:gap-6">
+          <Link
+            href={view === "driver" ? "/" : "/ops"}
+            className="shrink-0 no-underline"
           >
-            <span className="font-mono text-[0.65rem] tracking-[0.16em] text-orange uppercase">
-              {view === "driver" ? "Driver view" : "Operator view"}
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/vaya-logo.svg"
+              alt="Vaya"
+              width={90}
+              height={23}
+              className="h-[18px] w-auto md:h-[23px]"
+            />
+          </Link>
+          <nav
+            className="flex flex-wrap items-center gap-2 md:gap-3"
+            aria-label={view === "driver" ? "Driver tabs" : "Operator tabs"}
+          >
             {view === "driver" ? (
               <>
-                <Link href="/" className={navLink}>
+                <Link
+                  href="/"
+                  className={tabClass(pathname === "/")}
+                  aria-current={pathname === "/" ? "page" : undefined}
+                >
                   Marketplace
                 </Link>
-                <Link href="/mine" className={navLink}>
+                <Link
+                  href="/mine"
+                  className={tabClass(pathname.startsWith("/mine"))}
+                  aria-current={
+                    pathname.startsWith("/mine") ? "page" : undefined
+                  }
+                >
                   My cars
                 </Link>
               </>
             ) : (
               <>
-                <Link href="/ops" className={navLink}>
+                <Link
+                  href="/ops"
+                  className={tabClass(
+                    pathname === "/ops" || pathname === "/ops/",
+                  )}
+                  aria-current={
+                    pathname === "/ops" || pathname === "/ops/"
+                      ? "page"
+                      : undefined
+                  }
+                >
                   Fleet
                 </Link>
-                <Link href="/ops/conflicts" className={navLink}>
+                <Link
+                  href="/ops/conflicts"
+                  className={tabClass(pathname.startsWith("/ops/conflicts"))}
+                  aria-current={
+                    pathname.startsWith("/ops/conflicts") ? "page" : undefined
+                  }
+                >
                   Conflicts
                 </Link>
-                <Link href="/ops/disputes" className={navLink}>
+                <Link
+                  href="/ops/disputes"
+                  className={tabClass(pathname.startsWith("/ops/disputes"))}
+                  aria-current={
+                    pathname.startsWith("/ops/disputes") ? "page" : undefined
+                  }
+                >
                   Disputes
                 </Link>
               </>
             )}
           </nav>
+        </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            <div className="flex flex-wrap items-center justify-end gap-2 md:gap-3">
-              {authRow}
-              <button
-                type="button"
-                onClick={switchView}
-                className={switchBtn}
-                aria-label={
-                  view === "driver"
-                    ? "Switch to Operator view"
-                    : "Switch to Driver view"
-                }
-              >
-                {view === "driver" ? "Operator view" : "Driver view"}
-              </button>
-            </div>
-            {clock}
+        <h1 className="pointer-events-none text-center font-sans text-[1.15rem] leading-none font-bold tracking-[-0.02em] text-ink uppercase md:text-[1.5rem] lg:text-[1.75rem]">
+          {view === "driver" ? "Driver view" : "Operator view"}
+        </h1>
+
+        <div className="flex flex-col items-end gap-1.5 justify-self-end">
+          <div className="flex flex-wrap items-center justify-end gap-2 md:gap-3">
+            {userLabel}
+            <button
+              type="button"
+              onClick={switchView}
+              className={switchBtn}
+              aria-label={
+                view === "driver"
+                  ? "Switch to Operator view"
+                  : "Switch to Driver view"
+              }
+            >
+              {view === "driver" ? "Operator view" : "Driver view"}
+            </button>
+            {authButton}
           </div>
+          {clock}
         </div>
       </div>
     </header>

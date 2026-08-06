@@ -33,6 +33,8 @@ npm run dev
 
 `db:seed` loads `data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
 
+`db:ingest` loads `data/feed.jsonl` into telemetry tables (raw + device assignments). Destructive to telemetry only.
+
 ### Google OAuth (Marketplace sign-in)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → Create **OAuth client ID** (Web application).

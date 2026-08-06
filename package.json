@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:ingest": "tsx scripts/ingest.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -89,6 +89,22 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
+## 2026-08-06 — Telemetry feed ingest (`npm run db:ingest`)
+
+**Action:** Loaded `data/feed.jsonl` via `scripts/ingest.ts`.
+
+**What we did:**
+- Truncated telemetry tables only (`mileage_decisions`, `trips`, `telemetry_raw`, `device_vehicle_assignments`, `devices`) — marketplace untouched.
+- Inserted each JSONL line into `telemetry_raw` with deterministic `natural_key` (idempotent).
+- Ensured `devices` rows by IMEI.
+- Opened/rotated `device_vehicle_assignments` when an event carries a VIN; on `vinChange`, closed the open interval and opened one for `newVin`.
+
+**Why:** Append-only raw store + time-bounded IMEI↔VIN bindings before trip assembly (see `DECISIONS.md`). Feed VINs stay unlinked from seed vehicles.
+
+**Re-run:** `npm run db:ingest` (destructive reload of telemetry tables).
+
+---
+
 ## Template for future entries
 
 ```md

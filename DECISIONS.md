@@ -146,6 +146,8 @@ On early end inside a billing period, write ledger entries:
 
 ### Telemetry pipeline (Part 2)
 
+Part 2 is an **ops explainability** product: same Ops shell as Part 1, not a second app. Marketplace tables stay separate (feed VINs ≠ seed VINs — parallel dataset).
+
 ```
 feed.jsonl
    │
@@ -168,6 +170,8 @@ trips + mileage_decisions
 Ops dispute screen: "customer says overage is wrong"
    show period, trusted miles, rejected fragments, device assignment at each trip
 ```
+
+**Operator questions drive the build:** trip list → assembly; trusted miles → mileage decision with provenance; dispute → never invent or silently average miles.
 
 Failure modes the schema/tests must survive (from the file, not invented):
 

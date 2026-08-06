@@ -68,6 +68,10 @@ export default async function RootLayout({
                 <Link href="/ops/conflicts" className={navLink}>
                   Conflicts
                 </Link>
+                <span className="text-muted text-[0.6rem]">|</span>
+                <Link href="/ops/disputes" className={navLink}>
+                  Disputes
+                </Link>
               </nav>
               {session?.user ? (
                 <div className="flex flex-col items-end gap-1.5">

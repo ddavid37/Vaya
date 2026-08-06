@@ -105,6 +105,23 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
+## 2026-08-06 — Trip assembly + mileage decisions (`npm run db:assemble`)
+
+**Action:** Built `trips` + `mileage_decisions` from `telemetry_raw` via `scripts/assemble.ts`.
+
+**Rules:**
+- Group by `transactionId` (tripStart/End/Metrics + REST `trip`).
+- Prefer event timestamps; last deliveredAt wins for duplicate end/metrics.
+- VIN from fragments or active assignment at `startAt`.
+- Mileage: prefer monotonic odometer delta; else `tripDistance`; never average. Impossible odo (e.g. TX-480041) → discard delta, trust distance when present.
+- Flags: `duplicate_trip_end`, `revised_metrics`, `metrics_delayed`, `rest_trip`, `vin_from_assignment`, `impossible_odometer`.
+
+**UI:** `/ops/disputes?imei=&from=&to=` — trusted miles + rationale per trip.
+
+**Re-run:** `npm run db:assemble` after ingest (wipes trips/mileage_decisions only).
+
+---
+
 ## Template for future entries
 
 ```md

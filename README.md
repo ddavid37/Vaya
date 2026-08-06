@@ -8,7 +8,7 @@ Work directly on `main`. After **every** change in this project: **commit and pu
 
 ## Status
 
-Part 1 marketplace is live. Part 2 telemetry **schema** is migrated (ingest + dispute UI next).
+Part 1 marketplace is live. Part 2: schema, ingest, assemble, and `/ops/disputes` are in.
 
 ## Stack
 
@@ -35,6 +35,8 @@ npm run dev
 
 `db:ingest` loads `data/feed.jsonl` into telemetry tables (raw + device assignments). Destructive to telemetry only.
 
+`db:assemble` builds trips + mileage decisions from raw events.
+
 ### Google OAuth (Marketplace sign-in)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → Create **OAuth client ID** (Web application).
@@ -50,6 +52,7 @@ npm run dev
 - `/mine` — your commitments: early end (date picker) + ledger + monthly total
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
+- `/ops/disputes` — Part 2 mileage disputes (trusted miles + provenance)
 
 ## Layout
 

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     "- Fleet truth = live commitment lock; Conflicts = seed quarantine.",
     "- Mileage review: COMPLETE can be red when flagged (e.g. duplicate_trip_end) — intentional.",
     "- Feed VINs ≠ seed marketplace VINs (parallel dataset).",
-    "- Driver on trips is usually unknown; fuel health from fuelConsumed; metrics from tripMetrics.",
+    "- Driver on trips is usually unknown; idle is totalIdlingTime (seconds); fuel + idle share trip health with hard events.",
     ctx
       ? `Current UI context: part=${ctx.part}; screen=${ctx.screen}; path=${ctx.pathname}${ctx.search || ""}; purpose=${ctx.purpose}`
       : "Current UI context: unknown.",

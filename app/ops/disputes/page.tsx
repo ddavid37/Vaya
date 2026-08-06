@@ -122,6 +122,8 @@ export default async function DisputesPage({
           averageDriveSpeed: m?.averageDriveSpeed ?? null,
           hardBrakingCounts: m?.hardBrakingCounts ?? null,
           hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+          totalIdlingTime: m?.totalIdlingTime ?? null,
+          tripTime: m?.tripTime ?? null,
           assemblyStatus: t.assemblyStatus,
           flags: t.flags,
         };
@@ -357,6 +359,8 @@ export default async function DisputesPage({
                     averageDriveSpeed: m?.averageDriveSpeed ?? null,
                     hardBrakingCounts: m?.hardBrakingCounts ?? null,
                     hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+                    totalIdlingTime: m?.totalIdlingTime ?? null,
+                    tripTime: m?.tripTime ?? null,
                     assemblyStatus: t.assemblyStatus,
                     flags: t.flags,
                   });
@@ -396,12 +400,26 @@ export default async function DisputesPage({
                             tripDistance {fmtMi(t.tripDistance)}
                             {fuel != null ? ` · fuel ${fuel}` : ""}
                           </p>
-                          <p className="mt-2 font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
-                            Driver
-                          </p>
-                          <p className="mt-0.5 font-mono text-[0.7rem] text-ink">
-                            unknown
-                          </p>
+                          <div className="mt-2 grid grid-cols-2 gap-x-3">
+                            <div>
+                              <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                                Driver
+                              </p>
+                              <p className="mt-0.5 font-mono text-[0.7rem] text-ink">
+                                unknown
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                                Idle
+                              </p>
+                              <p className="mt-0.5 font-mono text-[0.7rem] text-ink">
+                                {m?.totalIdlingTime != null
+                                  ? `${m.totalIdlingTime}s`
+                                  : "—"}
+                              </p>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="md:col-span-3">

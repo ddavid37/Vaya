@@ -1,10 +1,13 @@
-// Extract per-trip feed metrics from telemetry_raw (tripEnd fuel + tripMetrics speeds/events).
+// Extract per-trip feed metrics from telemetry_raw (tripEnd fuel + tripMetrics).
 
 export type TripFeedMetrics = {
   fuelConsumed: number | null;
   averageDriveSpeed: number | null;
   hardBrakingCounts: number | null;
   hardAccelerationCounts: number | null;
+  totalIdlingTime: number | null;
+  tripTime: number | null;
+  maxSpeed: number | null;
 };
 
 function asNum(v: unknown): number | null {
@@ -32,6 +35,9 @@ export function metricsByTransactionId(
       averageDriveSpeed: null,
       hardBrakingCounts: null,
       hardAccelerationCounts: null,
+      totalIdlingTime: null,
+      tripTime: null,
+      maxSpeed: null,
     };
     map.set(tx, fresh);
     return fresh;
@@ -50,9 +56,15 @@ export function metricsByTransactionId(
       const speed = asNum(data.averageDriveSpeed);
       const brake = asNum(data.hardBrakingCounts);
       const accel = asNum(data.hardAccelerationCounts);
+      const idle = asNum(data.totalIdlingTime);
+      const tripTime = asNum(data.tripTime);
+      const maxSpeed = asNum(data.maxSpeed);
       if (speed != null) b.averageDriveSpeed = speed;
       if (brake != null) b.hardBrakingCounts = brake;
       if (accel != null) b.hardAccelerationCounts = accel;
+      if (idle != null) b.totalIdlingTime = idle;
+      if (tripTime != null) b.tripTime = tripTime;
+      if (maxSpeed != null) b.maxSpeed = maxSpeed;
     }
   }
 
@@ -66,6 +78,7 @@ export function aggregateDriveSignals(
   hardBrakeSum: number;
   hardAccelSum: number;
   fuelSum: number;
+  idleSum: number;
   samplesWithSpeed: number;
   samplesWithFuel: number;
 } {
@@ -74,6 +87,7 @@ export function aggregateDriveSignals(
   let hardBrakeSum = 0;
   let hardAccelSum = 0;
   let fuelSum = 0;
+  let idleSum = 0;
   let samplesWithFuel = 0;
 
   for (const m of metrics) {
@@ -89,6 +103,7 @@ export function aggregateDriveSignals(
       fuelSum += m.fuelConsumed;
       samplesWithFuel += 1;
     }
+    if (m.totalIdlingTime != null) idleSum += m.totalIdlingTime;
   }
 
   return {
@@ -99,6 +114,7 @@ export function aggregateDriveSignals(
     hardBrakeSum,
     hardAccelSum,
     fuelSum: Number(fuelSum.toFixed(2)),
+    idleSum,
     samplesWithSpeed,
     samplesWithFuel,
   };

@@ -99,6 +99,8 @@ export async function POST(req: Request) {
       averageDriveSpeed: m?.averageDriveSpeed ?? null,
       hardBrakingCounts: m?.hardBrakingCounts ?? null,
       hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+      totalIdlingTime: m?.totalIdlingTime ?? null,
+      tripTime: m?.tripTime ?? null,
       assemblyStatus: t.assemblyStatus,
       flags: t.flags,
     });
@@ -116,6 +118,8 @@ export async function POST(req: Request) {
       averageDriveSpeed: m?.averageDriveSpeed ?? null,
       hardBrakingCounts: m?.hardBrakingCounts ?? null,
       hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+      totalIdlingTime: m?.totalIdlingTime ?? null,
+      tripTime: m?.tripTime ?? null,
       drivingHealth: health.health,
       drivingHealthCalculation: health.calculation,
     };
@@ -131,6 +135,8 @@ export async function POST(req: Request) {
         averageDriveSpeed: m?.averageDriveSpeed ?? null,
         hardBrakingCounts: m?.hardBrakingCounts ?? null,
         hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+        totalIdlingTime: m?.totalIdlingTime ?? null,
+        tripTime: m?.tripTime ?? null,
         assemblyStatus: t.assemblyStatus,
         flags: t.flags,
       };

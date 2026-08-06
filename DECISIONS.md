@@ -264,7 +264,7 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Op
 
 ### Fork H — Driving health: fuel-only vs composite
 
-- **Picked:** composite of fuel mi/gal + `averageDriveSpeed` + `hardBrakingCounts` + `hardAccelerationCounts` (`lib/driving-health.ts`); show the calculation on the trip card. Documented in `HOW-I-BUILT-IT.md`.
+- **Picked:** composite of fuel mi/gal + `averageDriveSpeed` + hard brake/accel + idle% (`totalIdlingTime`/`tripTime`) + `dataHealth` (`lib/driving-health.ts`); show the calculation on the trip card. Miles/disputes stay primary; idle is the efficiency adjunct. Documented in `HOW-I-BUILT-IT.md`.
 - **Rejected:** fuel-only efficiency badge (too narrow for the “how they drive” story); LLM-invented scores.
 - **Cost:** thresholds are demo heuristics — not underwriting. Explicitly labeled as such.
 

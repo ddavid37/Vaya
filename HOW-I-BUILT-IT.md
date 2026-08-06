@@ -82,6 +82,7 @@ Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each tri
 | `averageDriveSpeed` | ≤ 35 mph | 36–50 | &gt; 50 |
 | `hardBrakingCounts` | 0 | 1–2 | ≥ 3 |
 | `hardAccelerationCounts` | 0 | 1–2 | ≥ 3 |
+| Idle `totalIdlingTime / tripTime` | &lt; 10% | 10–25% | &gt; 25% |
 | `dataHealth` (flags / assembly) | clean COMPLETE | `duplicate_trip_end`, `revised_metrics`, `vin_from_assignment`, INCOMPLETE/OPEN | `IMPOSSIBLE_ODOMETER`, `METRICS_DELAYED` |
 
 **Trip overall:** average points → healthy (&lt;0.75) / fair (&lt;1.5) / poor. Trip **frame + status text color** follow this health (not a separate flag-only rule).

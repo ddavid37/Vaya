@@ -113,7 +113,7 @@ function dataHealthComponent(
 
 /**
  * Score one trip:
- * - fuel mi/gal, averageDriveSpeed, hardBrakingCounts, hardAccelerationCounts
+ * - fuel mi/gal, averageDriveSpeed, hard brake/accel, idle % of tripTime
  * - dataHealth from assembly status / flags (always included)
  *
  * Points 0/1/2 → average → healthy / fair / poor.
@@ -124,6 +124,8 @@ export function scoreDrivingHealth(args: {
   averageDriveSpeed: number | null;
   hardBrakingCounts: number | null;
   hardAccelerationCounts: number | null;
+  totalIdlingTime?: number | null;
+  tripTime?: number | null;
   assemblyStatus?: string | null;
   flags?: string[] | null;
 }): DrivingHealthResult {
@@ -240,6 +242,38 @@ export function scoreDrivingHealth(args: {
     }
   }
 
+  // Idle share of tripTime (seconds) — efficiency signal; skip if tripTime missing.
+  if (
+    args.totalIdlingTime != null &&
+    args.tripTime != null &&
+    args.tripTime > 0
+  ) {
+    const pct = (args.totalIdlingTime / args.tripTime) * 100;
+    const input = `${args.totalIdlingTime}s/${args.tripTime}s (${pct.toFixed(0)}%)`;
+    if (pct < 10) {
+      components.push({
+        name: "idle",
+        input,
+        band: "healthy",
+        points: 0,
+      });
+    } else if (pct <= 25) {
+      components.push({
+        name: "idle",
+        input,
+        band: "fair",
+        points: 1,
+      });
+    } else {
+      components.push({
+        name: "idle",
+        input,
+        band: "poor",
+        points: 2,
+      });
+    }
+  }
+
   // Data quality always participates when we have a trip row.
   components.push(dataHealthComponent(args.assemblyStatus, args.flags));
 
@@ -268,6 +302,8 @@ export type VinTripInput = {
   averageDriveSpeed: number | null;
   hardBrakingCounts: number | null;
   hardAccelerationCounts: number | null;
+  totalIdlingTime?: number | null;
+  tripTime?: number | null;
   assemblyStatus?: string | null;
   flags?: string[] | null;
 };

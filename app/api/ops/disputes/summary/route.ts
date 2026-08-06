@@ -1,7 +1,12 @@
-// POST: build a 1–3 sentence ops summary of device activity from assembled trip facts (OpenAI).
+// POST: build an ops summary of device activity from assembled trip + feed metrics (OpenAI).
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { drivingHealthFromFuel } from "@/lib/driving-health";
+import {
+  aggregateDriveSignals,
+  metricsByTransactionId,
+} from "@/lib/trip-metrics-from-raw";
 import { rateUsage, usageOverallLine } from "@/lib/usage-level";
 
 export const dynamic = "force-dynamic";
@@ -63,10 +68,50 @@ export async function POST(req: Request) {
     }),
   ]);
 
+  const metricRows =
+    trips.length > 0
+      ? await db.telemetryRaw.findMany({
+          where: {
+            event: { in: ["tripEnd", "trip", "tripMetrics"] },
+            transactionId: { in: trips.map((t) => t.transactionId) },
+          },
+          select: { event: true, transactionId: true, payload: true },
+        })
+      : [];
+  const metricsMap = metricsByTransactionId(metricRows);
+  const signals = aggregateDriveSignals(metricsMap.values());
+
   const trustedSum = trips.reduce((sum, t) => {
     const m = num(t.mileageDecision?.trustedMiles);
     return sum + (m ?? 0);
   }, 0);
+
+  const healthCounts = { healthy: 0, fair: 0, poor: 0, unknown: 0 };
+  const tripFacts = trips.map((t) => {
+    const miles = num(t.mileageDecision?.trustedMiles);
+    const m = metricsMap.get(t.transactionId);
+    const health = drivingHealthFromFuel({
+      miles,
+      fuelConsumed: m?.fuelConsumed ?? null,
+    });
+    healthCounts[health.health] += 1;
+    return {
+      transactionId: t.transactionId,
+      vin: t.vin,
+      startAt: t.startAt?.toISOString() ?? null,
+      endAt: t.endAt?.toISOString() ?? null,
+      assemblyStatus: t.assemblyStatus,
+      flags: t.flags,
+      trustedMiles: miles,
+      mileageSource: t.mileageDecision?.source ?? null,
+      fuelConsumed: m?.fuelConsumed ?? null,
+      averageDriveSpeed: m?.averageDriveSpeed ?? null,
+      hardBrakingCounts: m?.hardBrakingCounts ?? null,
+      hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+      drivingHealth: health.health,
+      drivingHealthLabel: health.label,
+    };
+  });
 
   const level = rateUsage(trips);
   const overallLine = usageOverallLine(level);
@@ -86,24 +131,33 @@ export async function POST(req: Request) {
     })),
     tripCount: trips.length,
     trustedMilesSum: Number(trustedSum.toFixed(1)),
-    trips: trips.map((t) => ({
-      transactionId: t.transactionId,
-      vin: t.vin,
-      startAt: t.startAt?.toISOString() ?? null,
-      endAt: t.endAt?.toISOString() ?? null,
-      assemblyStatus: t.assemblyStatus,
-      flags: t.flags,
-      trustedMiles: num(t.mileageDecision?.trustedMiles),
-      mileageSource: t.mileageDecision?.source ?? null,
-      rationale: t.mileageDecision?.rationale ?? null,
-    })),
+    driveSignals: {
+      meanAverageDriveSpeedMph: signals.avgSpeed,
+      hardBrakingCountsSum: signals.hardBrakeSum,
+      hardAccelerationCountsSum: signals.hardAccelSum,
+      fuelConsumedSum: signals.fuelSum,
+      tripsWithSpeed: signals.samplesWithSpeed,
+      tripsWithFuel: signals.samplesWithFuel,
+    },
+    drivingHealthCounts: healthCounts,
+    vehicleScanning: {
+      status: "placeholder",
+      note: "Before/after vehicle scanning tests are available on Signals; treat as not yet completed unless facts say otherwise.",
+    },
+    trips: tripFacts,
   };
 
   const system = [
-    "You write short ops summaries for a car-subscription telemetry review screen.",
-    "Use ONLY the JSON facts provided. Do not invent miles, VINs, trips, or causes.",
-    "Write 1 to 3 sentences in plain English for an ops reader.",
-    "Mention device (IMEI), VIN assignment changes if any, trusted miles, and notable flagged trips.",
+    "You write ops summaries for a car-subscription telemetry Mileage review screen.",
+    "Use ONLY the JSON facts. Do not invent miles, speeds, counts, VINs, or scan results.",
+    "Write 3 to 5 short sentences (still concise) for an ops reader.",
+    "You MUST explicitly consider and mention in every summary:",
+    "(1) averageDriveSpeed (use driveSignals.meanAverageDriveSpeedMph and/or trip values),",
+    "(2) hardBrakingCounts,",
+    "(3) hardAccelerationCounts,",
+    "(4) fuel / driving health (fuelConsumed and drivingHealthCounts),",
+    "(5) vehicle scanning tests (use vehicleScanning — note they are placeholders if status is placeholder).",
+    "Also mention trusted miles and notable flagged trips when present.",
     `End with exactly this sentence (same wording): "${overallLine}"`,
     "Feed VINs are a parallel dataset — do not claim marketplace subscription status.",
   ].join(" ");
@@ -117,12 +171,12 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.2,
-      max_tokens: 220,
+      max_tokens: 320,
       messages: [
         { role: "system", content: system },
         {
           role: "user",
-          content: `Summarize this device activity in 1–3 sentences, then the required overall line:\n${JSON.stringify(facts)}`,
+          content: `Summarize this device activity, covering speed/braking/accel, fuel health, and scanning, then the required overall line:\n${JSON.stringify(facts)}`,
         },
       ],
     }),
@@ -150,6 +204,36 @@ export async function POST(req: Request) {
 
   if (!summary.toLowerCase().includes(`use of the car is ${level}`)) {
     summary = `${summary.replace(/\s+$/, "")} ${overallLine}`;
+  }
+
+  // Soft guarantee: if model skipped a required theme, append a factual clause.
+  const lower = summary.toLowerCase();
+  const missing: string[] = [];
+  if (!lower.includes("speed") && !lower.includes("averagedrivespeed")) {
+    missing.push(
+      signals.avgSpeed != null
+        ? `Mean averageDriveSpeed ${signals.avgSpeed} mph`
+        : "averageDriveSpeed unavailable",
+    );
+  }
+  if (!lower.includes("brak")) {
+    missing.push(`hardBrakingCounts sum ${signals.hardBrakeSum}`);
+  }
+  if (!lower.includes("accel")) {
+    missing.push(`hardAccelerationCounts sum ${signals.hardAccelSum}`);
+  }
+  if (!lower.includes("fuel") && !lower.includes("health")) {
+    missing.push(
+      `fuelConsumed sum ${signals.fuelSum}; health counts ${JSON.stringify(healthCounts)}`,
+    );
+  }
+  if (!lower.includes("scan")) {
+    missing.push(
+      "Vehicle scanning tests remain placeholder (see Signals)",
+    );
+  }
+  if (missing.length > 0) {
+    summary = `${summary.replace(/\s+$/, "")} Also noted: ${missing.join("; ")}.`;
   }
 
   return NextResponse.json({ summary, level });

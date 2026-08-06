@@ -7,7 +7,7 @@ import {
   drivingHealthFromFuel,
   healthColor,
 } from "@/lib/driving-health";
-import { fuelByTransactionId } from "@/lib/fuel-from-raw";
+import { metricsByTransactionId } from "@/lib/trip-metrics-from-raw";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -51,17 +51,17 @@ export default async function DisputesPage({
       })
     : [];
 
-  const fuelRows =
+  const metricRows =
     trips.length > 0
       ? await db.telemetryRaw.findMany({
           where: {
-            event: { in: ["tripEnd", "trip"] },
+            event: { in: ["tripEnd", "trip", "tripMetrics"] },
             transactionId: { in: trips.map((t) => t.transactionId) },
           },
-          select: { transactionId: true, payload: true },
+          select: { event: true, transactionId: true, payload: true },
         })
       : [];
-  const fuelMap = fuelByTransactionId(fuelRows);
+  const metricsMap = metricsByTransactionId(metricRows);
 
   const trustedSum = trips.reduce((sum, t) => {
     const m = t.mileageDecision?.trustedMiles;
@@ -280,7 +280,8 @@ export default async function DisputesPage({
                       : t.tripDistance != null
                         ? Number(t.tripDistance.toString())
                         : null;
-                  const fuel = fuelMap.get(t.transactionId) ?? null;
+                  const m = metricsMap.get(t.transactionId);
+                  const fuel = m?.fuelConsumed ?? null;
                   const health = drivingHealthFromFuel({
                     miles,
                     fuelConsumed: fuel,
@@ -308,6 +309,32 @@ export default async function DisputesPage({
                         tripDistance {fmtMi(t.tripDistance)}
                         {fuel != null ? ` · fuelConsumed ${fuel}` : ""}
                       </p>
+                      <div className="mt-3 border-t border-rule pt-3">
+                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
+                          Critical metrics
+                        </p>
+                        <p className="mt-1 font-mono text-[0.75rem] text-ink">
+                          averageDriveSpeed{" "}
+                          {m?.averageDriveSpeed != null
+                            ? `${m.averageDriveSpeed} mph`
+                            : "—"}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[0.75rem] text-ink">
+                          hardBrakingCounts{" "}
+                          {m?.hardBrakingCounts != null
+                            ? m.hardBrakingCounts
+                            : "—"}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[0.75rem] text-ink">
+                          hardAccelerationCounts{" "}
+                          {m?.hardAccelerationCounts != null
+                            ? m.hardAccelerationCounts
+                            : "—"}
+                        </p>
+                        <p className="mt-0.5 text-[0.7rem] text-muted">
+                          From feed tripMetrics (when delivered).
+                        </p>
+                      </div>
                       <div className="mt-3 border-t border-rule pt-3">
                         <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
                           Driver

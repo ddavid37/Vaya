@@ -172,7 +172,7 @@ Ops Mileage review (/ops/disputes)
    + critical tripMetrics, composite driving health, manual confirm / insurance placeholders
    + ★ AI summary; global ? chat elsewhere
 Driving signals (/ops/signals)
-   mean averageDriveSpeed, hard accel/brake sums, accel-score placeholder, vehicle scanning UI
+   mean averageDriveSpeed, peak maxSpeed, hard accel/brake sums, vehicle scanning UI
 ```
 
 **Operator questions drive the build:** trip list → assembly; trusted miles → mileage decision with provenance; dispute → never invent or silently average miles.

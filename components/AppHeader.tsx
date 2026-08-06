@@ -8,9 +8,9 @@ import { usePathname, useRouter } from "next/navigation";
 export type AppView = "driver" | "operator";
 
 const tabIdle =
-  "font-mono text-[0.65rem] tracking-[0.16em] uppercase text-mid no-underline hover:text-orange focus-visible:text-orange focus-visible:outline-none transition-colors";
+  "font-mono text-[0.75rem] tracking-[0.14em] uppercase text-mid no-underline hover:text-orange focus-visible:text-orange focus-visible:outline-none transition-colors";
 const tabActive =
-  "font-mono text-[0.65rem] tracking-[0.16em] uppercase text-orange no-underline focus-visible:outline-none";
+  "font-mono text-[0.75rem] tracking-[0.14em] uppercase text-orange no-underline focus-visible:outline-none";
 
 const switchBtn =
   "border border-rule-s px-3 py-1.5 font-mono text-[0.65rem] tracking-[0.14em] text-mid uppercase transition-colors hover:border-orange hover:text-orange";

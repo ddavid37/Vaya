@@ -157,7 +157,9 @@ export default async function DisputesPage({
               <p className="font-mono text-[0.6rem] tracking-[0.14em] text-mid uppercase">
                 Flagged trips
               </p>
-              <p className="mt-1 text-2xl font-bold text-ink">{flagged.length}</p>
+              <p className="mt-1 text-2xl font-bold text-red-600">
+                {flagged.length}
+              </p>
             </div>
           </section>
 
@@ -219,19 +221,29 @@ export default async function DisputesPage({
               <div className="flex flex-col gap-4">
                 {trips.map((t) => {
                   const md = t.mileageDecision;
-                  const hot =
+                  const isFlagged =
                     t.assemblyStatus === "IMPOSSIBLE_ODOMETER" ||
-                    t.flags.includes("impossible_odometer");
+                    t.assemblyStatus === "METRICS_DELAYED" ||
+                    t.flags.includes("impossible_odometer") ||
+                    t.flags.includes("duplicate_trip_end") ||
+                    t.flags.includes("vin_from_assignment");
+                  const statusColor = isFlagged
+                    ? "text-red-600"
+                    : t.assemblyStatus === "COMPLETE"
+                      ? "text-green-700"
+                      : "text-mid";
                   return (
                     <article
                       key={t.id}
-                      className={`border px-4 py-4 ${hot ? "border-orange" : "border-rule"}`}
+                      className={`border px-4 py-4 ${isFlagged ? "border-red-300" : "border-rule"}`}
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h2 className="font-mono text-sm font-medium text-ink">
                           {t.transactionId}
                         </h2>
-                        <span className="font-mono text-[0.65rem] tracking-[0.12em] text-orange uppercase">
+                        <span
+                          className={`font-mono text-[0.65rem] tracking-[0.12em] uppercase ${statusColor}`}
+                        >
                           {t.assemblyStatus}
                         </span>
                       </div>

@@ -73,7 +73,7 @@ export default async function DisputesPage({
         Ops
       </p>
       <h1 className="text-[clamp(1.75rem,4vw,2.5rem)] leading-[0.95] font-bold tracking-[-0.01em] text-ink uppercase">
-        Mileage <span className="text-orange">disputes.</span>
+        Mileage <span className="text-orange">review.</span>
       </h1>
 
       <form

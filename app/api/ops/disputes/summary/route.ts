@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { rateUsage, usageOverallLine } from "@/lib/usage-level";
 
 export const dynamic = "force-dynamic";
 
@@ -67,12 +68,16 @@ export async function POST(req: Request) {
     return sum + (m ?? 0);
   }, 0);
 
+  const level = rateUsage(trips);
+  const overallLine = usageOverallLine(level);
+
   const facts = {
     imei,
     period: {
       from: body.from ?? null,
       to: body.to ?? null,
     },
+    usageLevel: level,
     assignments: assignments.map((a) => ({
       vin: a.vin,
       startedAt: a.startedAt.toISOString(),
@@ -95,10 +100,11 @@ export async function POST(req: Request) {
   };
 
   const system = [
-    "You write short ops summaries for a car-subscription telemetry dispute screen.",
+    "You write short ops summaries for a car-subscription telemetry review screen.",
     "Use ONLY the JSON facts provided. Do not invent miles, VINs, trips, or causes.",
     "Write 1 to 3 sentences in plain English for an ops reader.",
     "Mention device (IMEI), VIN assignment changes if any, trusted miles, and notable flagged trips.",
+    `End with exactly this sentence (same wording): "${overallLine}"`,
     "Feed VINs are a parallel dataset — do not claim marketplace subscription status.",
   ].join(" ");
 
@@ -111,12 +117,12 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       model: "gpt-4o-mini",
       temperature: 0.2,
-      max_tokens: 180,
+      max_tokens: 220,
       messages: [
         { role: "system", content: system },
         {
           role: "user",
-          content: `Summarize this device activity in 1–3 sentences:\n${JSON.stringify(facts)}`,
+          content: `Summarize this device activity in 1–3 sentences, then the required overall line:\n${JSON.stringify(facts)}`,
         },
       ],
     }),
@@ -134,7 +140,7 @@ export async function POST(req: Request) {
   const payload = (await openaiRes.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
-  const summary = payload.choices?.[0]?.message?.content?.trim();
+  let summary = payload.choices?.[0]?.message?.content?.trim() ?? "";
   if (!summary) {
     return NextResponse.json(
       { error: "Empty summary from model" },
@@ -142,5 +148,9 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json({ summary });
+  if (!summary.toLowerCase().includes(`use of the car is ${level}`)) {
+    summary = `${summary.replace(/\s+$/, "")} ${overallLine}`;
+  }
+
+  return NextResponse.json({ summary, level });
 }

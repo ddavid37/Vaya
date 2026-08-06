@@ -3,6 +3,14 @@
 "use client";
 
 import { useState } from "react";
+import { USAGE_LEGEND, type UsageLevel } from "@/lib/usage-level";
+
+const BOX: Record<UsageLevel, string> = {
+  green: "border-green-300 bg-green-50",
+  yellow: "border-yellow-300 bg-yellow-50",
+  orange: "border-orange-300 bg-orange-50",
+  red: "border-red-300 bg-red-50",
+};
 
 export function AiSummaryButton({
   imei,
@@ -14,6 +22,7 @@ export function AiSummaryButton({
   to?: string;
 }) {
   const [summary, setSummary] = useState<string | null>(null);
+  const [level, setLevel] = useState<UsageLevel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +31,7 @@ export function AiSummaryButton({
     setLoading(true);
     setError(null);
     setSummary(null);
+    setLevel(null);
     try {
       const res = await fetch("/api/ops/disputes/summary", {
         method: "POST",
@@ -32,12 +42,17 @@ export function AiSummaryButton({
           to: to || undefined,
         }),
       });
-      const data = (await res.json()) as { summary?: string; error?: string };
+      const data = (await res.json()) as {
+        summary?: string;
+        level?: UsageLevel;
+        error?: string;
+      };
       if (!res.ok) {
         setError(data.error ?? `Request failed (${res.status})`);
         return;
       }
       setSummary(data.summary ?? null);
+      setLevel(data.level ?? null);
     } catch {
       setError("Could not reach summary API");
     } finally {
@@ -58,12 +73,37 @@ export function AiSummaryButton({
       {error || summary ? (
         <div className="basis-full w-full">
           {error ? <p className="text-sm text-orange">{error}</p> : null}
-          {summary ? (
-            <div className="max-w-2xl border border-rule px-4 py-3">
-              <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
-                AI activity summary
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-ink">{summary}</p>
+          {summary && level ? (
+            <div className="flex w-full flex-col gap-4 md:flex-row md:items-start md:gap-8">
+              <div
+                className={`min-w-0 flex-1 border px-4 py-3 ${BOX[level]}`}
+              >
+                <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
+                  AI activity summary
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-ink">
+                  {summary}
+                </p>
+              </div>
+              <aside className="shrink-0 md:w-48">
+                <p className="mb-2 font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
+                  Usage legend
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {USAGE_LEGEND.map((row) => (
+                    <li
+                      key={row.level}
+                      className="flex items-center gap-2 font-mono text-[0.7rem] text-ink"
+                    >
+                      <span
+                        className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${row.circle}`}
+                        aria-hidden
+                      />
+                      <span>{row.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
             </div>
           ) : null}
         </div>

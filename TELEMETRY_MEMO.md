@@ -42,6 +42,55 @@ Policy below only chooses among routes that can actually deliver miles. It does 
 
 ---
 
+## 2. Cost it — fifteen cars, first year
+
+**Assumed stack** (matches routes B/C/E in the feed): one OBD/cellular gateway per car + vendor platform that emits trip envelopes, trip metrics, and occasional GPS crumbs. **No dashcams** in the base case (cameras are a different product; this feed does not include them). The feed does not name a vendor, so dollars below are a **pilot budget model**, not a signed quote.
+
+### What we confirmed vs guessed
+
+| Claim | Status | Note |
+|---|---|---|
+| Major fleet platforms (Samsara, Geotab-class) do **not** post a simple commercial $/vehicle on the marketing site — you get a quote | **Confirmed** | Public pricing pages are quote/funnel; reseller-led |
+| Samsara Sourcewell cooperative list: Vehicle Gateway license **$39 / vehicle / month** (LIC-VG-ENT); public-sector lighter SKU **$23** | **Confirmed** (published cooperative sheet, cited in 2026 industry writeups) | Government path, not Vaya’s likely commercial quote |
+| Geotab-class commercial SaaS often lands ~**$25–40 / vehicle / month** via resellers | **Guess band** (secondary reviews / reseller commentary) | Package depth varies |
+| Hardware gateway often ~**$80–150** one-time when not bundled | **Guess band** | Sometimes amortized into the monthly |
+| Install on a dealer lot, spare pool, ops time, our assemble/dispute stack | **Guess** | Never on the vendor sticker |
+
+### Working numbers (mid case) — label: mostly guessed
+
+All figures USD. “Per car / month (year-1)” amortizes one-time items over 12 months.
+
+| Line item | On vendor pricing page? | Amount | Fleet (15) year-1 | Per car / mo year-1 | Confirmed / Guess |
+|---|---|---|---|---|---|
+| Platform SaaS (trip + metrics, no cam) | Partially — quote only commercially; **$39** is a confirmed *gov list* anchor | **$32** / car / mo | $5,760 | $32.00 | **Guess** (inside $25–40 band; not our quote) |
+| Gateway hardware | Sometimes separate | **$125** / car once | $1,875 | $10.42 | **Guess** |
+| Install / move at lot (incl. `vinChange` swaps) | No | **$75** / car once + **$200** fleet contingency | $1,325 | $7.36 | **Guess** |
+| Spare dongles (failures / swaps) | No | **2** units @ $125 | $250 | $1.39 | **Guess** (feed shows device moves; buy spares) |
+| Ops labor (reconnect bursts, assignment hygiene, dispute minutes) | No | **~2 hr / mo** @ $50 loaded | $1,200 | $6.67 | **Guess** (IMEI `…002` delay pattern is real; hours are not) |
+| Vaya ingest / assemble / dispute tooling + webhook host (pilot year) | No | **~$250 / mo** shared | $3,000 | $16.67 | **Guess** (eng+infra; not vendor SaaS) |
+| **Total mid case** | | | **~$13,410** | **~$74.50** | Blended |
+
+**Per car, per month, first year (mid): ~$75.**  
+**Fifteen cars, first year (mid): ~$13.4k.**
+
+### Band (still guesses)
+
+| Case | $/car/mo year-1 | 15-car year-1 | What changed |
+|---|---|---|---|
+| Low | ~$50 | ~$9k | SaaS nearer $22, cheap install, lighter eng |
+| Mid (above) | ~$75 | ~$13.4k | Working case |
+| High (still no cams) | ~$110 | ~$20k | SaaS nearer $45, more dispute/ops load, pricier hardware |
+
+Adding dual-facing AI cams (often **+$40–55 / mo** on published gov sheets, hardware extra) would jump the pilot sharply and still would **not** appear in `feed.jsonl` — out of this base cost.
+
+### What this buys vs what it does not
+
+~$75/car/mo year-1 buys routes **B+C** (defendable trip miles + behavior signals) and sparse **E**. It does **not** buy driver identity, damage clocks, or continuous geofence — those are unavailable on this feed class, not a line item we forgot.
+
+**Before committing:** get a named commercial quote for 15 gateways (hardware included or not, install, term, overage for API/webhooks) and replace every **Guess** SaaS/hardware row. Ops and Vaya tooling rows will remain internal estimates.
+
+---
+
 ## Billing — replace “a number somebody typed”
 
 The brief’s overage vignette (6,840 driven, 840 over, $252 at $0.30/mi) is the email we must eventually defend. Route (A) still exists in the real world; routes (B)+(C) make **period miles** reconstructible trip-by-trip with provenance, so a dispute is not only “our clipboard vs their memory.”

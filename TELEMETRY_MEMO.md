@@ -2,7 +2,7 @@
 
 # Telemetry memo
 
-Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Source for everything below: `data/feed.jsonl`, `data/seed.json` (dealers in NJ), public vendor price sheets/writeups noted in §2. **Guess** = not confirmed on a primary quote.
+Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Sources: `data/feed.jsonl`, `data/seed.json` (NJ dealers), public pricing writeups in §2. **Guess** = not confirmed on a primary vendor quote.
 
 ---
 
@@ -56,37 +56,40 @@ Cheap trackers and cam-heavy platforms differ by **several times per car**. For 
 
 ## 4. Decide
 
-**Recommendation: instrument the 15-car pilot with a mid-tier gateway + API (routes B+C+G), and attack billing first.**
+**Recommendation: yes — instrument the 15-car pilot with a mid-tier gateway + API (routes B+C+G) now.** Of the three costs, we **attack billing**. We **leave insurance rate change and ops blind spots alone for now**.
 
 | Cost | Stance |
 |---|---|
-| **Billing (B)** | **Attack now** — trip ledger + provenance replaces “a number somebody typed” for overage disputes |
-| **Insurance (I)** | **Leave rate change alone for now** — keep hard-event exports; do not buy cams or claim underwriting |
-| **Ops blind spots (O)** | **Leave alone for now** — driver/damage/geofence are unavailable or need denser GPS + process we do not have |
+| **Billing** | **Attack** — trip ledger + provenance so overage is not only handwriting |
+| **Insurance** | **Leave alone for now** — hard-event exports only; no cams, no underwriting claim |
+| **Ops blind spots** | **Leave alone for now** — driver / damage / geofence need data or process this feed does not give |
 
-**What changes what people pay:** overage still uses plan `overagePerMile` and period miles; telemetry changes **evidence**, not a silent new fee. Subscription T&Cs must already allow mileage measurement and billing from recorded odometer/trip data (and notice/consent for location if we later use GPS). **Assumption:** we operate where seed dealers are — **NJ / US** (`seed.json` cities Englewood, Hackensack, Paramus). Confirm counsel on NJ/US consumer + telematics disclosure before go-live; I am not a lawyer.
+**Known gap (still recommend):** feed VINs have **0 overlap** with `seed.json` marketplace cars. We do **not** invent a subscriber link. Mid-tier still pays for itself as the **billing-evidence pipeline** on instrumented pilot cars; the full “this Google subscriber’s $252 email” waits on a real VIN↔subscription link later.
 
-**Not “do nothing”:** handwriting-only fails the brief’s dispute story. **Not “full platform”:** cameras and geofence theater do not buy billing defense.
+**What changes what people pay:** telemetry changes **evidence for miles**, not a new silent fee. Overage still follows plan `overagePerMile` × miles over allowance. **Where we operate: NJ / US** (`seed.json` dealers in Englewood, Hackensack, Paramus). We have **no subscriber T&Cs on file to cite** here — before go-live, counsel must put lawful mileage/telematics notice in the agreement. I am not a lawyer.
 
 ---
 
-## 5. Prove before spending — close in a day
+## 5. Prove before spending — close in a day (feed desk only)
 
-**Biggest question:** can mid-tier trip data defend one overage number better than handwriting?
+**Biggest question:** can trip-bounded feed data defend an overage total better than one handwritten number?
 
-**Cheapest one-day close:**
+**Cheapest close (no vendor call — only `feed.jsonl` + our rule):**
 
-1. Morning: get a **written quote** for 15 gateways (SaaS + hardware + install + API/webhook) — replaces Guess SaaS/hardware.  
-2. Same day: pick **one IMEI** in `feed.jsonl`, sum trusted miles with our rule (odo when monotonic, else `tripDistance`), and write the dispute paragraph ops would send — compare to a single handwritten period total.  
-3. If quote ≤ ~$40/car/mo SaaS and the paragraph is explainable trip-by-trip → buy mid-tier. If API/raw export missing or miles not trip-bounded → walk away.
+1. Pick **one IMEI** and a date window in the feed.  
+2. For each trip: trust odometer delta when start/end are monotonic; else `tripDistance` (never average) — same as `lib/mileage.ts` / `/ops/disputes`.  
+3. Sum trusted miles; write the short ops paragraph listing per-trip source + flags (e.g. `vinChange`, `METRICS_DELAYED`, TX-480041).  
+4. **Pass:** paragraph is explainable trip-by-trip without inventing miles. **Fail:** you need blends, GPS fiction, or a seed join that is not in the files.
+
+That settles “is the data shape worth buying mid-tier for?” in a day. Price confirmation is a later quote, not the blocker for this judgment.
 
 ---
 
 ## 6. One thing I refuse to build
 
-**Refuse: a “smart miles” blend that averages odometer delta with `tripDistance` (or invents trips/geofences from sparse `tripData`).**
+**Refuse: averaging odometer delta with `tripDistance` into a single “smart miles” number** (and the cousin move: inventing trips or geofences from sparse `tripData`).
 
-It looks fair on a pricing slide and loses the first real dispute. Other candidates I also will not build yet: VIN↔subscription fiction across feed/seed with 0 overlap; selling our composite driving-health score as insurer truth.
+It looks reasonable on a slide and loses the first real dispute — the feed already shows the two inputs disagree. That is the hard refuse.
 
 ---
 
@@ -94,7 +97,8 @@ It looks fair on a pricing slide and loses the first real dispute. Other candida
 
 | Fact | Source |
 |---|---|
-| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData` | `data/feed.jsonl` |
-| Dealers NJ | `data/seed.json` |
+| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData`, odo vs distance gap | `data/feed.jsonl` |
+| Dealers NJ / US | `data/seed.json` |
 | $39 VG gov list; commercial quote-only; $25–40 band | Public cooperative sheet / 2026 industry pricing writeups — **not** a Vaya vendor quote |
 | $/car mid ~$75 year-1 | **Mostly Guess** (§2) |
+| Subscriber T&Cs | **None on file** — not cited |

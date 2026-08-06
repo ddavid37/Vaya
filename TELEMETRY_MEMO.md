@@ -91,6 +91,41 @@ Adding dual-facing AI cams (often **+$40–55 / mo** on published gov sheets, ha
 
 ---
 
+## 3. What is worth paying for
+
+The cheap end of this market (~$10–20/car/mo class trackers) and the expensive end (full platform + AI cams, often several× that) are not “more of the same miles.” They buy different **physical capabilities**. Pricing pages bury that. For Vaya’s three costs, here is the cut I would make.
+
+### Pay for (worth the step up from cheap GPS)
+
+| Capability | Why it is worth money for Vaya | Evidence from living with the feed |
+|---|---|---|
+| **Trip-bounded odometer start/end** (route B), not only a live map pin | Overage disputes need reconstructible period miles with provenance — a breadcrumb map does not defend $252 | Clean trips disagree odo vs `tripDistance` by ~0.5–1.5 mi; we need both inputs and a rule, not a single “distance” tile |
+| **Vendor trip metrics on the same `transactionId`** (route C): hard brake/accel, idle, speeds, second distance | Insurance conversation needs *how they drive*, not only *that they moved*; also fallback miles when odo is impossible | TX-480041; hard-event fields are what Signals/health use |
+| **Reliable delivery + reconnect semantics** (route G): webhooks, REST backfill, disconnect/connect | Cheap devices that drop days of trips recreate handwriting risk in software | IMEI `…002` Jul 9–11 burst; without catch-up we under-bill or invent |
+| **Device↔vehicle change events** (`vinChange`) or equivalent assignment support | Dongles move; paying for “VIN forever” without this corrupts invoices | IMEI `…003` Jul 17 cliff |
+| **Raw event export / API we can store immutably** | Dispute email needs *our* ledger over vendor UI screenshots | Entire Part 2 design: `telemetry_raw` → decisions |
+
+These are the features that justify leaving the bottom of the market. If a quote is cheap but missing trip odometer + metrics + reconnect/API, it is not cheap — it fails billing.
+
+### Do not pay for (yet) — expensive SKUs that do not buy our pilot outcomes
+
+| Capability | Why I would not pay in year-1 pilot | Caveat |
+|---|---|---|
+| **AI dual-facing dashcams** (+ often ~$40–55/mo on published gov add-ons, plus hardware) | Do not fix odometer provenance; do not appear in this feed; “who was driving” still needs a process (fob/app), not only a face video we are not staffed to review | Revisit if damage disputes dominate losses *and* we staff review |
+| **Pretty fleet maps / coaching gamification** as the core SKU | Map theater does not write `mileage_decisions`; coaching is not an insurer filing | Fine as freebie; not a reason to 2× the contract |
+| **ELD / IFTA / CMV compliance bundles** | Subscription cars are not a trucking compliance problem | Do not buy truck SKUs for a car pilot |
+| **“Continuous geofence / stolen vehicle” premium tiers** that assume dense GPS | This feed’s `tripData` is sparse crumbs — paying for geofence theater without denser sampling is buying a checkbox | If plan-area abuse is real, pay for **dense GPS or parked-location check-ins**, not a marketing geofence on crumbs |
+| **Vendor “driver score” as underwriting** | Black-box scores we cannot explain lose the renewal argument the same way handwriting loses overage | Prefer exportable hard-event rates we can defend; score in-house if needed |
+| **Cabin / identity biometrics** | Not on the menu of this device class at any reasonable pilot price | Driver ID is a product decision (app unlock / fob), not a pricier dongle tier |
+
+### The gap, in one sentence
+
+**Worth paying for:** durable trip truth (odo + metrics + delivery + device moves) we can store and explain. **Not worth paying for (first):** cameras, coaching polish, compliance bundles, and geofence theater that do not change the overage email or the insurer conversation.
+
+Aim the commercial quote at the **mid stack in §2** (~$25–40/mo SaaS class with gateway), not the tracker floor and not the cam-heavy ceiling — unless a later loss review proves damage/identity pays for cameras.
+
+---
+
 ## Billing — replace “a number somebody typed”
 
 The brief’s overage vignette (6,840 driven, 840 over, $252 at $0.30/mi) is the email we must eventually defend. Route (A) still exists in the real world; routes (B)+(C) make **period miles** reconstructible trip-by-trip with provenance, so a dispute is not only “our clipboard vs their memory.”

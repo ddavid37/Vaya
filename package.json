@@ -11,7 +11,8 @@
     "db:ingest": "tsx scripts/ingest.ts",
     "db:assemble": "tsx scripts/assemble.ts",
     "test": "tsx --test tests/**/*.test.ts",
-    "test:telemetry": "tsx --test tests/telemetry.test.ts"
+    "test:telemetry": "tsx --test tests/telemetry.test.ts",
+    "check:secrets": "bash scripts/check-secrets.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

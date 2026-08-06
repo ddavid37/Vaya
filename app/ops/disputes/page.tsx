@@ -74,11 +74,6 @@ export default async function DisputesPage({
       <h1 className="text-[clamp(1.75rem,4vw,2.5rem)] leading-[0.95] font-bold tracking-[-0.01em] text-ink uppercase">
         Mileage <span className="text-orange">disputes.</span>
       </h1>
-      <p className="mt-3 max-w-2xl text-[0.9rem] leading-[1.7] font-light text-mid">
-        Morning-email screen: trusted miles with provenance. We never invent or
-        silently average odometer vs tripDistance. Feed VINs are a parallel
-        dataset — not joined to marketplace cars.
-      </p>
 
       <form
         method="get"

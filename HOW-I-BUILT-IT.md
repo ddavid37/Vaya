@@ -70,8 +70,35 @@ Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo
 
 ---
 
+## Driving health score (Mileage review)
+
+Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each trip scores only inputs that exist (fuel and/or `tripMetrics`); missing inputs are skipped, not invented.
+
+**Per-input bands → points** (`0` healthy, `1` fair, `2` poor):
+
+| Input | Healthy (0) | Fair (1) | Poor (2) |
+|---|---|---|---|
+| Fuel efficiency `miles / fuelConsumed` | ≥ 28 mi/gal | 18–28 | &lt; 18 |
+| `averageDriveSpeed` | ≤ 35 mph | 36–50 | &gt; 50 |
+| `hardBrakingCounts` | 0 | 1–2 | ≥ 3 |
+| `hardAccelerationCounts` | 0 | 1–2 | ≥ 3 |
+
+**Overall:** average the points of present components:
+
+- avg &lt; 0.75 → **healthy**
+- avg &lt; 1.5 → **fair**
+- else → **poor**
+- no inputs → **unknown**
+
+The trip card prints the exact calculation string under **Driving health** (e.g. `avg([fuel …; averageDriveSpeed …; …]) = 1.00 → fair`).
+
+Status color on the card is separate: **COMPLETE** is green unless the trip is **flagged** (e.g. `duplicate_trip_end`) — then the badge stays red even when assembly status is COMPLETE.
+
+---
+
 ## AI use
 
 - Used Cursor agents for scaffolding, schema, and UI brand pass from `website_resources/`.
 - Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring, My cars manage UX, feed ingest/assemble, dispute screen copy.
 - ChatGPT used for structuring Part 2 process notes; outcomes verified against the feed and assignment brief.
+- In-app: Disputes ★ AI summary + global floating `?` chat (`OPENAI_API_KEY`), both screen-context aware.

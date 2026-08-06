@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { drivingHealthFromFuel } from "@/lib/driving-health";
+import { scoreDrivingHealth } from "@/lib/driving-health";
 import {
   aggregateDriveSignals,
   metricsByTransactionId,
@@ -90,9 +90,12 @@ export async function POST(req: Request) {
   const tripFacts = trips.map((t) => {
     const miles = num(t.mileageDecision?.trustedMiles);
     const m = metricsMap.get(t.transactionId);
-    const health = drivingHealthFromFuel({
+    const health = scoreDrivingHealth({
       miles,
       fuelConsumed: m?.fuelConsumed ?? null,
+      averageDriveSpeed: m?.averageDriveSpeed ?? null,
+      hardBrakingCounts: m?.hardBrakingCounts ?? null,
+      hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
     });
     healthCounts[health.health] += 1;
     return {
@@ -109,7 +112,7 @@ export async function POST(req: Request) {
       hardBrakingCounts: m?.hardBrakingCounts ?? null,
       hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
       drivingHealth: health.health,
-      drivingHealthLabel: health.label,
+      drivingHealthCalculation: health.calculation,
     };
   });
 
@@ -155,7 +158,7 @@ export async function POST(req: Request) {
     "(1) averageDriveSpeed (use driveSignals.meanAverageDriveSpeedMph and/or trip values),",
     "(2) hardBrakingCounts,",
     "(3) hardAccelerationCounts,",
-    "(4) fuel / driving health (fuelConsumed and drivingHealthCounts),",
+    "(4) composite driving health (fuel + averageDriveSpeed + hard brake/accel; see drivingHealthCalculation),",
     "(5) vehicle scanning tests (use vehicleScanning — note they are placeholders if status is placeholder).",
     "Also mention trusted miles and notable flagged trips when present.",
     `End with exactly this sentence (same wording): "${overallLine}"`,

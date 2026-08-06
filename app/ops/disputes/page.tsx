@@ -3,10 +3,7 @@
 import { AiSummaryButton } from "@/components/AiSummaryButton";
 import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
-import {
-  drivingHealthFromFuel,
-  healthColor,
-} from "@/lib/driving-health";
+import { healthColor, scoreDrivingHealth } from "@/lib/driving-health";
 import { metricsByTransactionId } from "@/lib/trip-metrics-from-raw";
 import Link from "next/link";
 
@@ -260,7 +257,7 @@ export default async function DisputesPage({
                 or run assemble.
               </p>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {trips.map((t) => {
                   const md = t.mileageDecision;
                   const isFlagged =
@@ -282,102 +279,122 @@ export default async function DisputesPage({
                         : null;
                   const m = metricsMap.get(t.transactionId);
                   const fuel = m?.fuelConsumed ?? null;
-                  const health = drivingHealthFromFuel({
+                  const health = scoreDrivingHealth({
                     miles,
                     fuelConsumed: fuel,
+                    averageDriveSpeed: m?.averageDriveSpeed ?? null,
+                    hardBrakingCounts: m?.hardBrakingCounts ?? null,
+                    hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
                   });
                   return (
                     <article
                       key={t.id}
-                      className={`border px-4 py-4 ${isFlagged ? "border-red-300" : "border-rule"}`}
+                      className={`w-full border px-4 py-3 md:px-5 ${isFlagged ? "border-red-300" : "border-rule"}`}
                     >
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 className="font-mono text-sm font-medium text-ink">
-                          {t.transactionId}
-                        </h2>
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <h2 className="font-mono text-sm font-medium text-ink">
+                            {t.transactionId}
+                          </h2>
+                          <span className="font-mono text-[0.7rem] text-muted">
+                            VIN {t.vin ?? "—"}
+                          </span>
+                          <span className="font-mono text-[0.7rem] text-muted">
+                            {fmtTs(t.startAt)} → {fmtTs(t.endAt)}
+                          </span>
+                        </div>
                         <span
                           className={`font-mono text-[0.65rem] tracking-[0.12em] uppercase ${statusColor}`}
                         >
                           {t.assemblyStatus}
                         </span>
                       </div>
-                      <p className="mt-1 font-mono text-[0.7rem] text-muted">
-                        VIN {t.vin ?? "—"} · {fmtTs(t.startAt)} → {fmtTs(t.endAt)}
-                      </p>
-                      <p className="mt-1 font-mono text-[0.7rem] text-muted">
-                        odo {fmtMi(t.startOdometer)} → {fmtMi(t.endOdometer)} ·
-                        tripDistance {fmtMi(t.tripDistance)}
-                        {fuel != null ? ` · fuelConsumed ${fuel}` : ""}
-                      </p>
-                      <div className="mt-3 border-t border-rule pt-3">
-                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
-                          Critical metrics
-                        </p>
-                        <p className="mt-1 font-mono text-[0.75rem] text-ink">
-                          averageDriveSpeed{" "}
-                          {m?.averageDriveSpeed != null
-                            ? `${m.averageDriveSpeed} mph`
-                            : "—"}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[0.75rem] text-ink">
-                          hardBrakingCounts{" "}
-                          {m?.hardBrakingCounts != null
-                            ? m.hardBrakingCounts
-                            : "—"}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[0.75rem] text-ink">
-                          hardAccelerationCounts{" "}
-                          {m?.hardAccelerationCounts != null
-                            ? m.hardAccelerationCounts
-                            : "—"}
-                        </p>
-                        <p className="mt-0.5 text-[0.7rem] text-muted">
-                          From feed tripMetrics (when delivered).
-                        </p>
-                      </div>
-                      <div className="mt-3 border-t border-rule pt-3">
-                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
-                          Driver
-                        </p>
-                        <p className="mt-1 font-mono text-[0.75rem] text-ink">
-                          unknown
-                        </p>
-                        <p className="mt-0.5 text-[0.7rem] text-muted">
-                          Feed has no driver identity on trip events.
-                        </p>
-                      </div>
-                      <div className="mt-3 border-t border-rule pt-3">
-                        <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
-                          Driving health · fuel
-                        </p>
-                        <p
-                          className={`mt-1 font-mono text-[0.75rem] uppercase ${healthColor(health.health)}`}
-                        >
-                          {health.health}
-                        </p>
-                        <p className="mt-0.5 text-[0.7rem] text-muted">
-                          {health.label}
-                          {fuel != null
-                            ? ` · fuelConsumed ${fuel} from tripEnd`
-                            : ""}
-                        </p>
-                      </div>
-                      {t.flags.length > 0 ? (
-                        <p className="mt-2 font-mono text-[0.65rem] text-mid">
-                          flags: {t.flags.join(", ")}
-                        </p>
-                      ) : null}
-                      {md ? (
-                        <div className="mt-3 border-t border-rule pt-3">
-                          <p className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">
-                            Mileage decision · {md.source} ·{" "}
-                            {fmtMi(md.trustedMiles)}
+
+                      <div className="mt-3 grid gap-3 border-t border-rule pt-3 md:grid-cols-12 md:gap-4">
+                        <div className="md:col-span-3">
+                          <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                            Distance · fuel
                           </p>
-                          <p className="mt-1 text-sm leading-relaxed text-mid">
-                            {md.rationale}
+                          <p className="mt-1 font-mono text-[0.7rem] leading-relaxed text-ink">
+                            odo {fmtMi(t.startOdometer)} → {fmtMi(t.endOdometer)}
+                          </p>
+                          <p className="font-mono text-[0.7rem] text-muted">
+                            tripDistance {fmtMi(t.tripDistance)}
+                            {fuel != null ? ` · fuel ${fuel}` : ""}
+                          </p>
+                          <p className="mt-2 font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                            Driver
+                          </p>
+                          <p className="mt-0.5 font-mono text-[0.7rem] text-ink">
+                            unknown
                           </p>
                         </div>
-                      ) : null}
+
+                        <div className="md:col-span-3">
+                          <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                            Critical metrics
+                          </p>
+                          <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 font-mono text-[0.7rem] text-ink">
+                            <dt className="text-muted">avgSpeed</dt>
+                            <dd>
+                              {m?.averageDriveSpeed != null
+                                ? `${m.averageDriveSpeed} mph`
+                                : "—"}
+                            </dd>
+                            <dt className="text-muted">hardBrake</dt>
+                            <dd>
+                              {m?.hardBrakingCounts != null
+                                ? m.hardBrakingCounts
+                                : "—"}
+                            </dd>
+                            <dt className="text-muted">hardAccel</dt>
+                            <dd>
+                              {m?.hardAccelerationCounts != null
+                                ? m.hardAccelerationCounts
+                                : "—"}
+                            </dd>
+                          </dl>
+                        </div>
+
+                        <div className="md:col-span-3">
+                          <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                            Driving health
+                          </p>
+                          <p
+                            className={`mt-1 font-mono text-[0.75rem] uppercase ${healthColor(health.health)}`}
+                          >
+                            {health.health}
+                          </p>
+                          <p className="mt-1 font-mono text-[0.65rem] leading-relaxed break-words text-muted">
+                            {health.calculation}
+                          </p>
+                        </div>
+
+                        <div className="md:col-span-3">
+                          <p className="font-mono text-[0.55rem] tracking-[0.12em] text-mid uppercase">
+                            Mileage decision
+                          </p>
+                          {md ? (
+                            <>
+                              <p className="mt-1 font-mono text-[0.7rem] text-ink">
+                                {md.source} · {fmtMi(md.trustedMiles)}
+                              </p>
+                              <p className="mt-1 text-[0.75rem] leading-snug text-mid">
+                                {md.rationale}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="mt-1 font-mono text-[0.7rem] text-muted">
+                              —
+                            </p>
+                          )}
+                          {t.flags.length > 0 ? (
+                            <p className="mt-2 font-mono text-[0.6rem] leading-snug text-mid">
+                              flags: {t.flags.join(", ")}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
                     </article>
                   );
                 })}

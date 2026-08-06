@@ -167,11 +167,17 @@ TripAssembler (by transactionId)
 trips + mileage_decisions
    │
    ▼
-Ops dispute screen: "customer says overage is wrong"
+Ops Mileage review (/ops/disputes)
    show period, trusted miles, rejected fragments, device assignment at each trip
+   + critical tripMetrics, composite driving health, manual confirm / insurance placeholders
+   + ★ AI summary; global ? chat elsewhere
+Driving signals (/ops/signals)
+   mean averageDriveSpeed, hard accel/brake sums, accel-score placeholder, vehicle scanning UI
 ```
 
 **Operator questions drive the build:** trip list → assembly; trusted miles → mileage decision with provenance; dispute → never invent or silently average miles.
+
+**UI shell:** header toggles **Part 1 Marketplace** vs **Part 2 Telemetry** (not driver/ops). Part 1 tabs: Marketplace, My cars, Fleet, Conflicts. Part 2 tabs: Review, Signals. Floating `?` AI chat on every route with `screenContextFromLocation`.
 
 Failure modes the schema/tests must survive (from the file, not invented):
 
@@ -250,6 +256,30 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Op
 - **Rejected:** fuzzy-match or rewrite seed VINs.
 - **Cost:** no single-pane "this subscriber's overage from the dongle" without a link step — honest to the files we were given.
 
+### Fork G — Header: Driver/Operator vs Part 1/Part 2
+
+- **Picked:** Part 1 (Marketplace) vs Part 2 (Telemetry) — matches how the brief is graded and how tables are separated.
+- **Rejected (after trying):** Driver vs Operator audiences in the header (blurred Disputes into “ops” with Fleet).
+- **Cost of picked:** Part 1 still mixes driver screens and fleet ops in one mode; clarified with tab labels.
+
+### Fork H — Driving health: fuel-only vs composite
+
+- **Picked:** composite of fuel mi/gal + `averageDriveSpeed` + `hardBrakingCounts` + `hardAccelerationCounts` (`lib/driving-health.ts`); show the calculation on the trip card. Documented in `HOW-I-BUILT-IT.md`.
+- **Rejected:** fuel-only efficiency badge (too narrow for the “how they drive” story); LLM-invented scores.
+- **Cost:** thresholds are demo heuristics — not underwriting. Explicitly labeled as such.
+
+### Fork I — COMPLETE badge color vs flags
+
+- **Picked:** green when COMPLETE and unflagged; **red when flagged** even if status text is still COMPLETE (e.g. `duplicate_trip_end` on TX-480005).
+- **Rejected:** always green for COMPLETE (hides dirty assembly).
+- **Cost:** looks like a bug until you read flags — intentional “look closer” signal.
+
+### Fork J — Handwriting / insurance / scans
+
+- **Picked:** Manual mileage confirm persisted (`manual_mileage_confirms`); multi policy insurance + optional named driver as local placeholders; vehicle scanning on Signals as placeholder.
+- **Rejected:** full document vault / camera pipeline / real insurer API.
+- **Why:** addresses the brief’s “only evidence was handwriting” with a logged confirm, without overbuilding Part 2.
+
 ---
 
 ## 3. Calls the brief left unspecified
@@ -285,15 +315,16 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Op
 
 **Building**
 
-- Part 1: marketplace browse/commit, ops fleet view, invariant + concurrent-safe API, early end with ledger, seed load with conflict quarantine, screens never empty.
-- Part 2: migrated telemetry schema, jsonl ingestion, dispute screen, tests per failure mode above.
-- Docs: this file, HOW-I-BUILT-IT, telemetry memo, README with two commands.
+- Part 1: marketplace browse/commit, ops fleet view, invariant + concurrent-safe API, early end with ledger, seed load with conflict quarantine, screens never empty, Google Auth.js for concurrent demo.
+- Part 2: telemetry schema, ingest, assemble, Mileage review (metrics, composite driving health, manual confirm, ★ AI summary), Signals screen, failure-mode tests, floating contextual AI chat.
+- Docs: this file, HOW-I-BUILT-IT (incl. health scoring), TELEMETRY_MEMO, README.
 
 **Deliberately not building**
 
 - Payments, refunds, card vault.
 - Dealer-facing portal.
 - Live webhook server (batch ingest only).
-- Insurance scoring product (memo territory).
+- Real insurer pricing / actuarial models (demo health heuristics only).
 - Driver mobile app / push.
-- Perfect GPS playback from `tripData`.
+- Perfect GPS playback / geofence alerts from `tripData`.
+- Fabricated marketplace↔feed VIN joins.

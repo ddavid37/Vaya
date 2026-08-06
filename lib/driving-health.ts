@@ -1,53 +1,203 @@
-// Trip driving-health hint from fuelConsumed + trusted miles (feed units as gallons-ish).
+// Composite trip driving-health from fuel + tripMetrics (demo heuristics, not insurer-grade).
 
 export type DrivingHealth = "healthy" | "fair" | "poor" | "unknown";
 
-/**
- * Higher mi/gal ≈ healthier efficiency for this pilot sketch.
- * Thresholds are demo heuristics, not OEM ratings.
- */
-export function drivingHealthFromFuel(args: {
-  miles: number | null;
-  fuelConsumed: number | null;
-}): {
+type Component = {
+  name: string;
+  input: string;
+  band: DrivingHealth;
+  /** 0 = healthy, 1 = fair, 2 = poor */
+  points: number;
+};
+
+export type DrivingHealthResult = {
   health: DrivingHealth;
   mpg: number | null;
   label: string;
-} {
+  /** Human-readable formula shown under DRIVING HEALTH */
+  calculation: string;
+  components: Component[];
+};
+
+function bandFromPoints(avg: number): DrivingHealth {
+  if (avg < 0.75) return "healthy";
+  if (avg < 1.5) return "fair";
+  return "poor";
+}
+
+/**
+ * Score one trip using whatever inputs exist:
+ * - fuel → mi/gal from trusted miles / fuelConsumed
+ * - averageDriveSpeed
+ * - hardBrakingCounts
+ * - hardAccelerationCounts
+ *
+ * Each present input maps to healthy(0) / fair(1) / poor(2). Overall =
+ * average of those points → healthy / fair / poor. Missing inputs are skipped
+ * (not invented). If none present → unknown.
+ */
+export function scoreDrivingHealth(args: {
+  miles: number | null;
+  fuelConsumed: number | null;
+  averageDriveSpeed: number | null;
+  hardBrakingCounts: number | null;
+  hardAccelerationCounts: number | null;
+}): DrivingHealthResult {
+  const components: Component[] = [];
+  let mpg: number | null = null;
+
   const { miles, fuelConsumed } = args;
   if (
-    miles == null ||
-    fuelConsumed == null ||
-    fuelConsumed <= 0 ||
-    miles <= 0
+    miles != null &&
+    fuelConsumed != null &&
+    fuelConsumed > 0 &&
+    miles > 0
   ) {
+    mpg = miles / fuelConsumed;
+    if (mpg >= 28) {
+      components.push({
+        name: "fuel",
+        input: `${mpg.toFixed(1)} mi/gal`,
+        band: "healthy",
+        points: 0,
+      });
+    } else if (mpg >= 18) {
+      components.push({
+        name: "fuel",
+        input: `${mpg.toFixed(1)} mi/gal`,
+        band: "fair",
+        points: 1,
+      });
+    } else {
+      components.push({
+        name: "fuel",
+        input: `${mpg.toFixed(1)} mi/gal`,
+        band: "poor",
+        points: 2,
+      });
+    }
+  }
+
+  if (args.averageDriveSpeed != null) {
+    const s = args.averageDriveSpeed;
+    if (s <= 35) {
+      components.push({
+        name: "averageDriveSpeed",
+        input: `${s} mph`,
+        band: "healthy",
+        points: 0,
+      });
+    } else if (s <= 50) {
+      components.push({
+        name: "averageDriveSpeed",
+        input: `${s} mph`,
+        band: "fair",
+        points: 1,
+      });
+    } else {
+      components.push({
+        name: "averageDriveSpeed",
+        input: `${s} mph`,
+        band: "poor",
+        points: 2,
+      });
+    }
+  }
+
+  if (args.hardBrakingCounts != null) {
+    const b = args.hardBrakingCounts;
+    if (b === 0) {
+      components.push({
+        name: "hardBrakingCounts",
+        input: String(b),
+        band: "healthy",
+        points: 0,
+      });
+    } else if (b <= 2) {
+      components.push({
+        name: "hardBrakingCounts",
+        input: String(b),
+        band: "fair",
+        points: 1,
+      });
+    } else {
+      components.push({
+        name: "hardBrakingCounts",
+        input: String(b),
+        band: "poor",
+        points: 2,
+      });
+    }
+  }
+
+  if (args.hardAccelerationCounts != null) {
+    const a = args.hardAccelerationCounts;
+    if (a === 0) {
+      components.push({
+        name: "hardAccelerationCounts",
+        input: String(a),
+        band: "healthy",
+        points: 0,
+      });
+    } else if (a <= 2) {
+      components.push({
+        name: "hardAccelerationCounts",
+        input: String(a),
+        band: "fair",
+        points: 1,
+      });
+    } else {
+      components.push({
+        name: "hardAccelerationCounts",
+        input: String(a),
+        band: "poor",
+        points: 2,
+      });
+    }
+  }
+
+  if (components.length === 0) {
     return {
       health: "unknown",
-      mpg: null,
-      label: "No fuelConsumed for this trip",
+      mpg,
+      label: "No fuel or tripMetrics inputs for health score",
+      calculation: "n/a — need fuelConsumed and/or tripMetrics",
+      components,
     };
   }
 
-  const mpg = miles / fuelConsumed;
-  if (mpg >= 28) {
-    return {
-      health: "healthy",
-      mpg,
-      label: `Healthy efficiency (~${mpg.toFixed(1)} mi/gal)`,
-    };
-  }
-  if (mpg >= 18) {
-    return {
-      health: "fair",
-      mpg,
-      label: `Fair efficiency (~${mpg.toFixed(1)} mi/gal)`,
-    };
-  }
+  const avg =
+    components.reduce((s, c) => s + c.points, 0) / components.length;
+  const health = bandFromPoints(avg);
+  const parts = components
+    .map((c) => `${c.name} ${c.input}→${c.band}(${c.points})`)
+    .join("; ");
+  const calculation = `avg([${parts}]) = ${avg.toFixed(2)} → ${health} (thresholds: <0.75 healthy, <1.5 fair, else poor; points 0/1/2)`;
+
   return {
-    health: "poor",
+    health,
     mpg,
-    label: `Poor efficiency (~${mpg.toFixed(1)} mi/gal)`,
+    label: `${health} composite from ${components.length} input(s)`,
+    calculation,
+    components,
   };
+}
+
+/** @deprecated use scoreDrivingHealth — kept name for older call sites during rename */
+export function drivingHealthFromFuel(args: {
+  miles: number | null;
+  fuelConsumed: number | null;
+  averageDriveSpeed?: number | null;
+  hardBrakingCounts?: number | null;
+  hardAccelerationCounts?: number | null;
+}): DrivingHealthResult {
+  return scoreDrivingHealth({
+    miles: args.miles,
+    fuelConsumed: args.fuelConsumed,
+    averageDriveSpeed: args.averageDriveSpeed ?? null,
+    hardBrakingCounts: args.hardBrakingCounts ?? null,
+    hardAccelerationCounts: args.hardAccelerationCounts ?? null,
+  });
 }
 
 export function healthColor(health: DrivingHealth): string {

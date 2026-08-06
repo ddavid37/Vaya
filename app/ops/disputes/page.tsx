@@ -3,7 +3,11 @@
 import { AiSummaryButton } from "@/components/AiSummaryButton";
 import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
-import { healthColor, scoreDrivingHealth } from "@/lib/driving-health";
+import {
+  healthColor,
+  scoreDrivingHealth,
+  scoreVinDrivingHealth,
+} from "@/lib/driving-health";
 import { metricsByTransactionId } from "@/lib/trip-metrics-from-raw";
 import Link from "next/link";
 
@@ -95,6 +99,32 @@ export default async function DisputesPage({
         take: 12,
       })
     : [];
+
+  const vinHealthByVin = new Map<
+    string,
+    ReturnType<typeof scoreVinDrivingHealth>
+  >();
+  for (const a of assignments) {
+    const vinTrips = trips
+      .filter((t) => t.vin === a.vin)
+      .map((t) => {
+        const m = metricsMap.get(t.transactionId);
+        const miles =
+          t.mileageDecision?.trustedMiles != null
+            ? Number(t.mileageDecision.trustedMiles.toString())
+            : t.tripDistance != null
+              ? Number(t.tripDistance.toString())
+              : null;
+        return {
+          miles,
+          fuelConsumed: m?.fuelConsumed ?? null,
+          averageDriveSpeed: m?.averageDriveSpeed ?? null,
+          hardBrakingCounts: m?.hardBrakingCounts ?? null,
+          hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+        };
+      });
+    vinHealthByVin.set(a.vin, scoreVinDrivingHealth(vinTrips));
+  }
 
   return (
     <main className="w-full px-6 py-10 md:px-14 md:py-12">
@@ -225,20 +255,70 @@ export default async function DisputesPage({
                     <th className="px-4 py-2 font-mono text-[0.6rem] font-normal tracking-[0.12em] text-mid uppercase">
                       Ended
                     </th>
+                    <th className="px-4 py-2 font-mono text-[0.6rem] font-normal tracking-[0.12em] text-mid uppercase">
+                      Overall driving health
+                    </th>
+                    <th className="px-4 py-2 font-mono text-[0.6rem] font-normal tracking-[0.12em] text-mid uppercase">
+                      Mean metrics (in view)
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assignments.map((a) => (
-                    <tr key={a.id} className="border-b border-rule last:border-0">
-                      <td className="px-4 py-2 font-mono text-xs">{a.vin}</td>
-                      <td className="px-4 py-2 font-mono text-xs text-mid">
-                        {fmtTs(a.startedAt)}
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs text-mid">
-                        {a.endedAt ? fmtTs(a.endedAt) : "open"}
-                      </td>
-                    </tr>
-                  ))}
+                  {assignments.map((a) => {
+                    const vh = vinHealthByVin.get(a.vin);
+                    return (
+                      <tr
+                        key={a.id}
+                        className="border-b border-rule last:border-0 align-top"
+                      >
+                        <td className="px-4 py-2 font-mono text-xs">{a.vin}</td>
+                        <td className="px-4 py-2 font-mono text-xs text-mid">
+                          {fmtTs(a.startedAt)}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-xs text-mid">
+                          {a.endedAt ? fmtTs(a.endedAt) : "open"}
+                        </td>
+                        <td className="px-4 py-2">
+                          {vh ? (
+                            <>
+                              <p
+                                className={`font-mono text-xs uppercase ${healthColor(vh.health)}`}
+                              >
+                                {vh.health}
+                              </p>
+                              <p className="mt-1 max-w-md font-mono text-[0.65rem] leading-snug text-muted">
+                                {vh.calculation}
+                              </p>
+                            </>
+                          ) : (
+                            <span className="font-mono text-xs text-muted">
+                              —
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-[0.7rem] text-ink">
+                          {vh ? (
+                            <>
+                              <div>
+                                avgSpeed {vh.meanSpeed != null ? `${vh.meanSpeed} mph` : "—"}
+                              </div>
+                              <div>
+                                hardBrake {vh.meanHardBrake ?? "—"}
+                              </div>
+                              <div>
+                                hardAccel {vh.meanHardAccel ?? "—"}
+                              </div>
+                              <div className="mt-1 text-muted">
+                                {vh.scoredCount}/{vh.tripCount} trips scored
+                              </div>
+                            </>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

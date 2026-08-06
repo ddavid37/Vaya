@@ -212,3 +212,90 @@ export function healthColor(health: DrivingHealth): string {
       return "text-muted";
   }
 }
+
+export type VinTripInput = {
+  miles: number | null;
+  fuelConsumed: number | null;
+  averageDriveSpeed: number | null;
+  hardBrakingCounts: number | null;
+  hardAccelerationCounts: number | null;
+};
+
+/**
+ * Overall VIN health for trips in the current filter:
+ * score each trip, average points of known trips, same band thresholds.
+ * Also reports mean speed / mean hard events used in the rollup line.
+ */
+export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResult & {
+  tripCount: number;
+  scoredCount: number;
+  meanSpeed: number | null;
+  meanHardBrake: number | null;
+  meanHardAccel: number | null;
+} {
+  const scored = trips
+    .map((t) => scoreDrivingHealth(t))
+    .filter((h) => h.health !== "unknown");
+
+  const speeds = trips
+    .map((t) => t.averageDriveSpeed)
+    .filter((v): v is number => v != null);
+  const brakes = trips
+    .map((t) => t.hardBrakingCounts)
+    .filter((v): v is number => v != null);
+  const accels = trips
+    .map((t) => t.hardAccelerationCounts)
+    .filter((v): v is number => v != null);
+
+  const mean = (xs: number[]) =>
+    xs.length ? Number((xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1)) : null;
+
+  const meanSpeed = mean(speeds);
+  const meanHardBrake = mean(brakes);
+  const meanHardAccel = mean(accels);
+
+  if (scored.length === 0) {
+    return {
+      health: "unknown",
+      mpg: null,
+      label: "No scored trips for this VIN in view",
+      calculation: "n/a — no trip health inputs in current filter",
+      components: [],
+      tripCount: trips.length,
+      scoredCount: 0,
+      meanSpeed,
+      meanHardBrake,
+      meanHardAccel,
+    };
+  }
+
+  const avg =
+    scored.reduce((s, h) => {
+      const pts =
+        h.components.reduce((a, c) => a + c.points, 0) / h.components.length;
+      return s + pts;
+    }, 0) / scored.length;
+  const health = bandFromPoints(avg);
+
+  const counts = { healthy: 0, fair: 0, poor: 0 };
+  for (const h of scored) {
+    if (h.health === "healthy" || h.health === "fair" || h.health === "poor") {
+      counts[h.health] += 1;
+    }
+  }
+
+  const calculation = `VIN rollup: mean of ${scored.length} trip scores = ${avg.toFixed(2)} → ${health} (trips healthy/fair/poor ${counts.healthy}/${counts.fair}/${counts.poor}; mean avgSpeed ${meanSpeed ?? "—"} mph, mean hardBrake ${meanHardBrake ?? "—"}, mean hardAccel ${meanHardAccel ?? "—"})`;
+
+  return {
+    health,
+    mpg: null,
+    label: `${health} over ${scored.length} trip(s)`,
+    calculation,
+    components: [],
+    tripCount: trips.length,
+    scoredCount: scored.length,
+    meanSpeed,
+    meanHardBrake,
+    meanHardAccel,
+  };
+}

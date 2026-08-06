@@ -54,11 +54,14 @@ npm test
 
 ## App
 
+**Driver**
 - `/` — marketplace (Google sign-in + commit)
 - `/mine` — your commitments: early end (date picker) + ledger + monthly total
+
+**Ops**
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
-- `/ops/disputes` — Part 2 mileage disputes (trusted miles + provenance)
+- `/ops/disputes` — mileage disputes (IMEI → time-bounded VIN; trusted miles + provenance)
 
 ## Layout
 

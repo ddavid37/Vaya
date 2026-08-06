@@ -161,8 +161,14 @@ export default async function DisputesPage({
           </section>
 
           <section className="mt-8">
-            <p className="mb-3 font-mono text-[0.65rem] tracking-[0.16em] text-mid uppercase">
+            <p className="mb-1 font-mono text-[0.65rem] tracking-[0.16em] text-mid uppercase">
               Device ↔ VIN assignments
+            </p>
+            <p className="mb-3 max-w-2xl text-[0.8rem] leading-relaxed font-light text-muted">
+              One IMEI is usually on one VIN at a time. Assignments are
+              time-bounded — a dongle can move cars (
+              <span className="font-mono text-[0.75rem]">vinChange</span>
+              ); closed rows end, the open row is current.
             </p>
             <div className="overflow-x-auto border border-rule">
               <table className="w-full text-left text-sm">

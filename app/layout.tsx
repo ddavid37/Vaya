@@ -52,26 +52,39 @@ export default async function RootLayout({
               />
             </Link>
             <div className="flex items-center gap-4 md:gap-6">
-              <nav className="flex items-center gap-2 md:gap-4">
-                <Link href="/" className={navLink}>
-                  Marketplace
-                </Link>
-                <span className="text-muted text-[0.6rem]">|</span>
-                <Link href="/mine" className={navLink}>
-                  My cars
-                </Link>
-                <span className="text-muted text-[0.6rem]">|</span>
-                <Link href="/ops" className={navLink}>
-                  Ops
-                </Link>
-                <span className="text-muted text-[0.6rem]">|</span>
-                <Link href="/ops/conflicts" className={navLink}>
-                  Conflicts
-                </Link>
-                <span className="text-muted text-[0.6rem]">|</span>
-                <Link href="/ops/disputes" className={navLink}>
-                  Disputes
-                </Link>
+              <nav
+                className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2"
+                aria-label="Primary"
+              >
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="font-mono text-[0.55rem] tracking-[0.14em] text-muted uppercase">
+                    Driver
+                  </span>
+                  <Link href="/" className={navLink}>
+                    Marketplace
+                  </Link>
+                  <Link href="/mine" className={navLink}>
+                    My cars
+                  </Link>
+                </div>
+                <span
+                  className="hidden h-3 w-px bg-rule sm:block"
+                  aria-hidden
+                />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="font-mono text-[0.55rem] tracking-[0.14em] text-muted uppercase">
+                    Ops
+                  </span>
+                  <Link href="/ops" className={navLink}>
+                    Fleet
+                  </Link>
+                  <Link href="/ops/conflicts" className={navLink}>
+                    Conflicts
+                  </Link>
+                  <Link href="/ops/disputes" className={navLink}>
+                    Disputes
+                  </Link>
+                </div>
               </nav>
               {session?.user ? (
                 <div className="flex flex-col items-end gap-1.5">

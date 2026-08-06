@@ -24,6 +24,14 @@ function fmtTs(d: Date | null | undefined) {
   return d.toISOString().replace("T", " ").slice(0, 16) + "Z";
 }
 
+/** Seconds → m:ss (e.g. 40 → 0:40, 65 → 1:05). */
+function fmtIdle(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${rem.toString().padStart(2, "0")}`;
+}
+
 export default async function DisputesPage({
   searchParams,
 }: {
@@ -415,7 +423,7 @@ export default async function DisputesPage({
                               </p>
                               <p className="mt-0.5 font-mono text-[0.7rem] text-ink">
                                 {m?.totalIdlingTime != null
-                                  ? `${m.totalIdlingTime}s`
+                                  ? fmtIdle(m.totalIdlingTime)
                                   : "—"}
                               </p>
                             </div>

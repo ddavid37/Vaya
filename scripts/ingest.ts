@@ -1,9 +1,10 @@
 // Ingest data/feed.jsonl into telemetry_raw (idempotent) and apply IMEI↔VIN assignment side effects.
 
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { naturalKeyFor } from "../lib/telemetry-keys";
 
 const db = new PrismaClient();
 
@@ -23,27 +24,6 @@ function asDate(v: unknown): Date | null {
   if (typeof v !== "string" || !v) return null;
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
-}
-
-/** Deterministic idempotency key — distinguishes redelivered duplicates by deliveredAt. */
-export function naturalKeyFor(line: FeedLine): string {
-  const d = line.data ?? {};
-  const parts = [
-    line.source,
-    line.event,
-    line.deliveredAt,
-    asString(d.imei) ?? "",
-    asString(d.transactionId) ?? "",
-    asString(d.timestamp) ?? asString(d.startTime) ?? "",
-    line.endpoint ?? "",
-  ];
-  const base = parts.join("|");
-  // Extra hash of payload so two identical envelopes with different bodies still diverge.
-  const digest = createHash("sha256")
-    .update(JSON.stringify(line.data))
-    .digest("hex")
-    .slice(0, 12);
-  return `${base}|${digest}`;
 }
 
 function eventAtFor(line: FeedLine): Date | null {
@@ -234,11 +214,17 @@ async function main() {
   );
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await db.$disconnect();
-  });
+const isCli =
+  process.argv[1] != null &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isCli) {
+  main()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await db.$disconnect();
+    });
+}

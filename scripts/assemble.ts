@@ -1,6 +1,16 @@
 // Assemble trips from telemetry_raw and write mileage_decisions with provenance (never average).
 
-import { Prisma, PrismaClient, MileageSource, TripAssemblyStatus } from "@prisma/client";
+import {
+  Prisma,
+  PrismaClient,
+  MileageSource,
+  TripAssemblyStatus,
+} from "@prisma/client";
+import {
+  decideMileage,
+  isMetricsDelayed,
+  isTripAssemblyEvent,
+} from "../lib/mileage";
 
 const db = new PrismaClient();
 
@@ -46,88 +56,11 @@ async function vinAt(imei: string, at: Date | null): Promise<string | null> {
   return row?.vin ?? null;
 }
 
-function decideMileage(args: {
-  startOdo: number | null;
-  endOdo: number | null;
-  tripDistance: number | null;
-}): {
-  trustedMiles: number | null;
-  source: MileageSource;
-  discardedInputs: Prisma.InputJsonValue;
-  rationale: string;
-  impossibleOdo: boolean;
-} {
-  const { startOdo, endOdo, tripDistance } = args;
-  const discarded: Record<string, unknown> = {};
-  const impossibleOdo =
-    startOdo != null && endOdo != null && endOdo < startOdo;
-
-  const asJson = (v: Record<string, unknown>) =>
-    v as Prisma.InputJsonValue;
-
-  if (impossibleOdo) {
-    discarded.odometerDelta = {
-      startOdo,
-      endOdo,
-      reason: "end odometer below start",
-    };
-    if (tripDistance != null) {
-      return {
-        trustedMiles: tripDistance,
-        source: MileageSource.TRIP_DISTANCE,
-        discardedInputs: asJson(discarded),
-        rationale: `Rejected odometer delta (${startOdo} → ${endOdo}); trusted tripDistance ${tripDistance} mi.`,
-        impossibleOdo: true,
-      };
-    }
-    discarded.tripDistance = { reason: "missing" };
-    return {
-      trustedMiles: null,
-      source: MileageSource.NONE,
-      discardedInputs: asJson(discarded),
-      rationale: "Impossible odometer and no tripDistance — no trusted miles.",
-      impossibleOdo: true,
-    };
-  }
-
-  if (startOdo != null && endOdo != null) {
-    const delta = endOdo - startOdo;
-    if (tripDistance != null) {
-      discarded.tripDistance = {
-        value: tripDistance,
-        reason: "odometer delta preferred when monotonic",
-        deltaVsDistance: Number((delta - tripDistance).toFixed(3)),
-      };
-    }
-    return {
-      trustedMiles: delta,
-      source: MileageSource.ODOMETER_DELTA,
-      discardedInputs: asJson(discarded),
-      rationale: `Trusted odometer delta ${startOdo} → ${endOdo} = ${delta} mi (not averaged with tripDistance).`,
-      impossibleOdo: false,
-    };
-  }
-
-  discarded.odometerDelta = { reason: "incomplete start/end odometer" };
-  if (tripDistance != null) {
-    return {
-      trustedMiles: tripDistance,
-      source: MileageSource.TRIP_DISTANCE,
-      discardedInputs: asJson(discarded),
-      rationale: `Trusted tripDistance ${tripDistance} mi (odometer incomplete).`,
-      impossibleOdo: false,
-    };
-  }
-
-  discarded.tripDistance = { reason: "missing" };
-  return {
-    trustedMiles: null,
-    source: MileageSource.NONE,
-    discardedInputs: asJson(discarded),
-    rationale: "No odometer pair and no tripDistance — no trusted miles.",
-    impossibleOdo: false,
-  };
-}
+const SOURCE_MAP: Record<string, MileageSource> = {
+  ODOMETER_DELTA: MileageSource.ODOMETER_DELTA,
+  TRIP_DISTANCE: MileageSource.TRIP_DISTANCE,
+  NONE: MileageSource.NONE,
+};
 
 async function main() {
   await db.mileageDecision.deleteMany();
@@ -140,11 +73,7 @@ async function main() {
   const byTx = new Map<string, typeof raw>();
   for (const row of raw) {
     if (!row.transactionId) continue;
-    if (
-      !["tripStart", "tripEnd", "tripMetrics", "trip"].includes(row.event)
-    ) {
-      continue;
-    }
+    if (!isTripAssemblyEvent(row.event)) continue;
     const list = byTx.get(row.transactionId) ?? [];
     list.push(row);
     byTx.set(row.transactionId, list);
@@ -164,7 +93,6 @@ async function main() {
     const flags = new Set<string>();
     const notes: string[] = [];
 
-    // Last-writer by deliveredAt for duplicate ends/metrics.
     const sorted = [...events].sort(
       (a, b) => a.deliveredAt.getTime() - b.deliveredAt.getTime(),
     );
@@ -176,12 +104,15 @@ async function main() {
 
       if (row.event === "tripStart") {
         startAt = asDate(d.timestamp) ?? row.eventAt ?? startAt;
-        startOdo = num((d.start as { odometer?: unknown } | undefined)?.odometer) ?? startOdo;
+        startOdo =
+          num((d.start as { odometer?: unknown } | undefined)?.odometer) ??
+          startOdo;
         vin = str(d.vin) ?? vin;
         flags.add("webhook_start");
       } else if (row.event === "tripEnd") {
         endAt = asDate(d.timestamp) ?? row.eventAt ?? endAt;
-        endOdo = num((d.end as { odometer?: unknown } | undefined)?.odometer) ?? endOdo;
+        endOdo =
+          num((d.end as { odometer?: unknown } | undefined)?.odometer) ?? endOdo;
         vin = str(d.vin) ?? vin;
         if (flags.has("webhook_end")) flags.add("duplicate_trip_end");
         flags.add("webhook_end");
@@ -192,7 +123,6 @@ async function main() {
         if (flags.has("webhook_metrics")) flags.add("revised_metrics");
         flags.add("webhook_metrics");
       } else if (row.event === "trip") {
-        // REST complete shape — fill gaps; do not invent VIN.
         flags.add("rest_trip");
         startAt = asDate(d.startTime) ?? startAt;
         endAt = asDate(d.endTime) ?? endAt;
@@ -213,11 +143,7 @@ async function main() {
       if (vin) flags.add("vin_from_assignment");
     }
 
-    if (
-      metricsDeliveredAt &&
-      endAt &&
-      metricsDeliveredAt.getTime() - endAt.getTime() > 36 * 3600 * 1000
-    ) {
+    if (isMetricsDelayed(endAt, metricsDeliveredAt)) {
       flags.add("metrics_delayed");
     }
 
@@ -225,7 +151,11 @@ async function main() {
     if (mileage.impossibleOdo) flags.add("impossible_odometer");
 
     let status: TripAssemblyStatus = TripAssemblyStatus.INCOMPLETE;
-    if (startAt && endAt && (tripDistance != null || (startOdo != null && endOdo != null))) {
+    if (
+      startAt &&
+      endAt &&
+      (tripDistance != null || (startOdo != null && endOdo != null))
+    ) {
       status = TripAssemblyStatus.COMPLETE;
     } else if (startAt && endAt) {
       status = TripAssemblyStatus.INCOMPLETE;
@@ -255,8 +185,8 @@ async function main() {
       data: {
         tripId: trip.id,
         trustedMiles: dec(mileage.trustedMiles),
-        source: mileage.source,
-        discardedInputs: mileage.discardedInputs,
+        source: SOURCE_MAP[mileage.source],
+        discardedInputs: mileage.discardedInputs as Prisma.InputJsonValue,
         rationale: mileage.rationale,
       },
     });

@@ -61,10 +61,17 @@ Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo
 
 ---
 
-## AI use (ongoing)
+## Part 2 — living with the feed
+
+- **Throwaway:** early idea of FK from trips into marketplace `vehicles` — feed VINs have zero overlap with seed; parallel dataset instead.
+- **Wrong output caught:** averaging odometer delta with `tripDistance` would look “fair” and lose disputes; policy is pick one source and record the discard.
+- **Hand-checks:** `vinChange` closes/opens assignments; TX-480041 impossible odo trusts tripDistance; `tripData` stays raw-only; `/ops/disputes` shows rationale.
+- Memo: `TELEMETRY_MEMO.md`. Tests: `npm test` (one suite per failure mode in `DECISIONS.md`).
+
+---
+
+## AI use
 
 - Used Cursor agents for scaffolding, schema, and UI brand pass from `website_resources/`.
-- Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring, My cars manage UX, feed ingest.
+- Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring, My cars manage UX, feed ingest/assemble, dispute screen copy.
 - ChatGPT used for structuring Part 2 process notes; outcomes verified against the feed and assignment brief.
-
-*(Expand with throwaways / wrong outputs as the build continues.)*

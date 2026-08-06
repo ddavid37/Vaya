@@ -9,7 +9,9 @@
     "lint": "eslint",
     "db:seed": "tsx scripts/seed.ts",
     "db:ingest": "tsx scripts/ingest.ts",
-    "db:assemble": "tsx scripts/assemble.ts"
+    "db:assemble": "tsx scripts/assemble.ts",
+    "test": "tsx --test tests/**/*.test.ts",
+    "test:telemetry": "tsx --test tests/telemetry.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

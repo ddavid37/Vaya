@@ -8,7 +8,7 @@ Work directly on `main`. After **every** change in this project: **commit and pu
 
 ## Status
 
-Part 1 marketplace is live. Part 2: schema, ingest, assemble, and `/ops/disputes` are in.
+Part 1 marketplace and Part 2 telemetry are complete: schema, ingest, assemble, `/ops/disputes`, failure-mode tests (`npm test`), and `TELEMETRY_MEMO.md`.
 
 ## Stack
 
@@ -37,6 +37,12 @@ npm run dev
 
 `db:assemble` builds trips + mileage decisions from raw events.
 
+```bash
+npm run db:ingest
+npm run db:assemble
+npm test
+```
+
 ### Google OAuth (Marketplace sign-in)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → Create **OAuth client ID** (Web application).
@@ -60,9 +66,11 @@ npm run dev
 app/           routes + API
 auth.ts        Auth.js (Google → Driver)
 components/    CommitForm, AuthButtons, …
-lib/           db client, subscription domain
+lib/           db client, subscription + mileage domain
 prisma/        schema + migrations
-scripts/       seed loader
+scripts/       seed, ingest, assemble
+tests/         telemetry failure-mode tests
 data/          assignment fixtures
 DB.md          log of every DB manipulation
+TELEMETRY_MEMO.md  Part 2 memo
 ```

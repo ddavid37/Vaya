@@ -81,9 +81,10 @@ Do **not** start with a polished design system or auth. Empty-screen risk is hig
 
 ## Done when
 
-- [ ] Clean machine: `npm run setup && npm run dev` → clickable data on every screen
-- [ ] Concurrent commit: one winner, one sensible 409
-- [ ] Early end shows defendable ledger rows
-- [ ] Ops shows what we decided about bad seed rows
-- [ ] Dispute screen explains a dirty trip without inventing miles
-- [ ] Tests cover each telemetry failure mode we claim
+- [x] Clean machine: migrate + seed + ingest/assemble + `npm run dev` → clickable data on every screen
+- [x] Concurrent commit: one winner, one sensible 409 (two Chrome profiles)
+- [x] Early end shows defendable ledger rows
+- [x] Ops shows what we decided about bad seed rows (`/ops/conflicts`)
+- [x] Dispute screen explains a dirty trip without inventing miles (`/ops/disputes`)
+- [x] Tests cover each telemetry failure mode we claim (`npm test`)
+- [x] `TELEMETRY_MEMO.md` written from the feed

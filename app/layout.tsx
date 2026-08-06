@@ -1,8 +1,10 @@
 // Root layout: brand shell, audience-scoped nav, Google auth controls, EST clock.
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Mono, Outfit } from "next/font/google";
 import { auth } from "@/auth";
+import { AiChatFab } from "@/components/AiChatFab";
 import { AppHeader } from "@/components/AppHeader";
 import { SignInButton, SignOutButton } from "@/components/AuthButtons";
 import { EstClock } from "@/components/EstClock";
@@ -57,6 +59,9 @@ export default async function RootLayout({
           clock={<EstClock />}
         />
         {children}
+        <Suspense fallback={null}>
+          <AiChatFab />
+        </Suspense>
       </body>
     </html>
   );

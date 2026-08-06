@@ -85,13 +85,17 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 
 ---
 
-## 6. One thing I refuse to build
+## 6. Things I refuse to build
 
-**Refuse: averaging odometer delta with `tripDistance` into one “smart miles” number.**
+**Primary refuse — data integrity:** averaging odometer delta with `tripDistance` into one “smart miles” number. The feed gives two disagreeing estimates; blending invents a third. Pick one source per trip, record the discard — or bill nothing.
 
-Meaning: the feed gives two different mile estimates for the same trip. I will not ship code (or an invoice) that secretly blends them and presents one number as truth. Pick one source per trip, record the other as discarded — or bill nothing for that trip. Same spirit: I will not invent trips/geofences from sparse `tripData`.
+**Also refuse — integrity + privacy (location):**
 
-Why this refuse (not another): it is the mistake that looks “fair” and still loses the overage email. (Other things I also will not build yet — fake feed↔seed joins, insurer “health scores” — are secondary.)
+1. **Geofence / “outside plan area for weeks” from sparse `tripData`.** A handful of GPS crumbs are not continuous presence. Shipping that alert fabricates certainty (**data integrity**) and treats thin location samples like ongoing tracking of where someone lives/parks — a use we should not imply without clear notice and a lawful basis under **NJ/US** privacy expectations for location data (**privacy**). Store crumbs raw; do not productize the story.
+
+2. **Inventing trips from GPS crumbs.** Turning breadcrumbs into billing/ops “trips” invents events that were never delivered as trips (**data integrity**) and expands location into a movement history the subscriber was not clearly signed up for (**privacy**). Trips come from `tripStart`/`tripEnd`/`tripMetrics` (and REST `trip`), not from `tripData`.
+
+Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
 
 ---
 

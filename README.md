@@ -64,7 +64,7 @@ One header part at a time (toggle **Part 1** ↔ **Part 2** next to Sign in/out)
 
 **Part 2 — Telemetry**
 - `/ops/disputes` — Mileage review (trips, driver unknown, manual confirm, scan/insurance placeholders, ★ AI)
-- `/ops/signals` — driving signals sketch (avg speed from tripMetrics; acceleration score placeholder)
+- `/ops/signals` — driving signals (avg speed, maxSpeed, hard accel/brake from tripMetrics)
 
 ## Layout
 

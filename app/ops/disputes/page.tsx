@@ -5,6 +5,7 @@ import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
 import {
   healthColor,
+  healthFrameClass,
   scoreDrivingHealth,
   scoreVinDrivingHealth,
 } from "@/lib/driving-health";
@@ -121,6 +122,8 @@ export default async function DisputesPage({
           averageDriveSpeed: m?.averageDriveSpeed ?? null,
           hardBrakingCounts: m?.hardBrakingCounts ?? null,
           hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+          assemblyStatus: t.assemblyStatus,
+          flags: t.flags,
         };
       });
     vinHealthByVin.set(a.vin, scoreVinDrivingHealth(vinTrips));
@@ -340,17 +343,6 @@ export default async function DisputesPage({
               <div className="flex flex-col gap-3">
                 {trips.map((t) => {
                   const md = t.mileageDecision;
-                  const isFlagged =
-                    t.assemblyStatus === "IMPOSSIBLE_ODOMETER" ||
-                    t.assemblyStatus === "METRICS_DELAYED" ||
-                    t.flags.includes("impossible_odometer") ||
-                    t.flags.includes("duplicate_trip_end") ||
-                    t.flags.includes("vin_from_assignment");
-                  const statusColor = isFlagged
-                    ? "text-red-600"
-                    : t.assemblyStatus === "COMPLETE"
-                      ? "text-green-700"
-                      : "text-mid";
                   const miles =
                     md?.trustedMiles != null
                       ? Number(md.trustedMiles.toString())
@@ -365,11 +357,13 @@ export default async function DisputesPage({
                     averageDriveSpeed: m?.averageDriveSpeed ?? null,
                     hardBrakingCounts: m?.hardBrakingCounts ?? null,
                     hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+                    assemblyStatus: t.assemblyStatus,
+                    flags: t.flags,
                   });
                   return (
                     <article
                       key={t.id}
-                      className={`w-full border px-4 py-3 md:px-5 ${isFlagged ? "border-red-300" : "border-rule"}`}
+                      className={`w-full border-2 px-4 py-3 md:px-5 ${healthFrameClass(health.health)}`}
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -384,7 +378,7 @@ export default async function DisputesPage({
                           </span>
                         </div>
                         <span
-                          className={`font-mono text-[0.65rem] tracking-[0.12em] uppercase ${statusColor}`}
+                          className={`font-mono text-[0.65rem] tracking-[0.12em] uppercase ${healthColor(health.health)}`}
                         >
                           {t.assemblyStatus}
                         </span>

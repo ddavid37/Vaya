@@ -1,4 +1,4 @@
-// Composite trip driving-health from fuel + tripMetrics (demo heuristics, not insurer-grade).
+// Composite trip driving-health: behavior metrics + data-quality (demo heuristics).
 
 export type DrivingHealth = "healthy" | "fair" | "poor" | "unknown";
 
@@ -17,6 +17,8 @@ export type DrivingHealthResult = {
   /** Human-readable formula shown under DRIVING HEALTH */
   calculation: string;
   components: Component[];
+  /** Mean component points (for rollups / usage-level mapping) */
+  avgPoints: number | null;
 };
 
 function bandFromPoints(avg: number): DrivingHealth {
@@ -25,16 +27,96 @@ function bandFromPoints(avg: number): DrivingHealth {
   return "poor";
 }
 
+/** Frame / status text classes from driving health. */
+export function healthFrameClass(health: DrivingHealth): string {
+  switch (health) {
+    case "healthy":
+      return "border-green-400";
+    case "fair":
+      return "border-yellow-400";
+    case "poor":
+      return "border-red-400";
+    default:
+      return "border-rule";
+  }
+}
+
+export function healthColor(health: DrivingHealth): string {
+  switch (health) {
+    case "healthy":
+      return "text-green-700";
+    case "fair":
+      return "text-yellow-600";
+    case "poor":
+      return "text-red-600";
+    default:
+      return "text-muted";
+  }
+}
+
+function dataHealthComponent(
+  assemblyStatus: string | null | undefined,
+  flags: string[] | null | undefined,
+): Component {
+  const f = flags ?? [];
+  const status = assemblyStatus ?? "";
+
+  if (
+    status === "IMPOSSIBLE_ODOMETER" ||
+    f.includes("impossible_odometer")
+  ) {
+    return {
+      name: "dataHealth",
+      input: "impossible_odometer",
+      band: "poor",
+      points: 2,
+    };
+  }
+  if (status === "METRICS_DELAYED" || f.includes("metrics_delayed")) {
+    return {
+      name: "dataHealth",
+      input: "metrics_delayed",
+      band: "poor",
+      points: 2,
+    };
+  }
+  if (
+    f.includes("duplicate_trip_end") ||
+    f.includes("vin_from_assignment") ||
+    f.includes("revised_metrics") ||
+    status === "INCOMPLETE" ||
+    status === "OPEN"
+  ) {
+    const why =
+      [
+        f.includes("duplicate_trip_end") ? "duplicate_trip_end" : null,
+        f.includes("vin_from_assignment") ? "vin_from_assignment" : null,
+        f.includes("revised_metrics") ? "revised_metrics" : null,
+        status === "INCOMPLETE" || status === "OPEN" ? status : null,
+      ]
+        .filter(Boolean)
+        .join("+") || "soft_flag";
+    return {
+      name: "dataHealth",
+      input: why,
+      band: "fair",
+      points: 1,
+    };
+  }
+  return {
+    name: "dataHealth",
+    input: "clean",
+    band: "healthy",
+    points: 0,
+  };
+}
+
 /**
- * Score one trip using whatever inputs exist:
- * - fuel → mi/gal from trusted miles / fuelConsumed
- * - averageDriveSpeed
- * - hardBrakingCounts
- * - hardAccelerationCounts
+ * Score one trip:
+ * - fuel mi/gal, averageDriveSpeed, hardBrakingCounts, hardAccelerationCounts
+ * - dataHealth from assembly status / flags (always included)
  *
- * Each present input maps to healthy(0) / fair(1) / poor(2). Overall =
- * average of those points → healthy / fair / poor. Missing inputs are skipped
- * (not invented). If none present → unknown.
+ * Points 0/1/2 → average → healthy / fair / poor.
  */
 export function scoreDrivingHealth(args: {
   miles: number | null;
@@ -42,6 +124,8 @@ export function scoreDrivingHealth(args: {
   averageDriveSpeed: number | null;
   hardBrakingCounts: number | null;
   hardAccelerationCounts: number | null;
+  assemblyStatus?: string | null;
+  flags?: string[] | null;
 }): DrivingHealthResult {
   const components: Component[] = [];
   let mpg: number | null = null;
@@ -156,23 +240,17 @@ export function scoreDrivingHealth(args: {
     }
   }
 
-  if (components.length === 0) {
-    return {
-      health: "unknown",
-      mpg,
-      label: "No fuel or tripMetrics inputs for health score",
-      calculation: "n/a — need fuelConsumed and/or tripMetrics",
-      components,
-    };
-  }
+  // Data quality always participates when we have a trip row.
+  components.push(dataHealthComponent(args.assemblyStatus, args.flags));
 
+  // If only dataHealth (no behavior/fuel), still score.
   const avg =
     components.reduce((s, c) => s + c.points, 0) / components.length;
   const health = bandFromPoints(avg);
   const parts = components
     .map((c) => `${c.name} ${c.input}→${c.band}(${c.points})`)
     .join("; ");
-  const calculation = `avg([${parts}]) = ${avg.toFixed(2)} → ${health} (thresholds: <0.75 healthy, <1.5 fair, else poor; points 0/1/2)`;
+  const calculation = `avg([${parts}]) = ${avg.toFixed(2)} → ${health} (thresholds: <0.75 healthy, <1.5 fair, else poor; includes dataHealth)`;
 
   return {
     health,
@@ -180,37 +258,8 @@ export function scoreDrivingHealth(args: {
     label: `${health} composite from ${components.length} input(s)`,
     calculation,
     components,
+    avgPoints: avg,
   };
-}
-
-/** @deprecated use scoreDrivingHealth — kept name for older call sites during rename */
-export function drivingHealthFromFuel(args: {
-  miles: number | null;
-  fuelConsumed: number | null;
-  averageDriveSpeed?: number | null;
-  hardBrakingCounts?: number | null;
-  hardAccelerationCounts?: number | null;
-}): DrivingHealthResult {
-  return scoreDrivingHealth({
-    miles: args.miles,
-    fuelConsumed: args.fuelConsumed,
-    averageDriveSpeed: args.averageDriveSpeed ?? null,
-    hardBrakingCounts: args.hardBrakingCounts ?? null,
-    hardAccelerationCounts: args.hardAccelerationCounts ?? null,
-  });
-}
-
-export function healthColor(health: DrivingHealth): string {
-  switch (health) {
-    case "healthy":
-      return "text-green-700";
-    case "fair":
-      return "text-orange";
-    case "poor":
-      return "text-red-600";
-    default:
-      return "text-muted";
-  }
 }
 
 export type VinTripInput = {
@@ -219,12 +268,12 @@ export type VinTripInput = {
   averageDriveSpeed: number | null;
   hardBrakingCounts: number | null;
   hardAccelerationCounts: number | null;
+  assemblyStatus?: string | null;
+  flags?: string[] | null;
 };
 
 /**
- * Overall VIN health for trips in the current filter:
- * score each trip, average points of known trips, same band thresholds.
- * Also reports mean speed / mean hard events used in the rollup line.
+ * Overall VIN / device health: mean of per-trip composite scores (behavior + data).
  */
 export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResult & {
   tripCount: number;
@@ -233,9 +282,7 @@ export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResul
   meanHardBrake: number | null;
   meanHardAccel: number | null;
 } {
-  const scored = trips
-    .map((t) => scoreDrivingHealth(t))
-    .filter((h) => h.health !== "unknown");
+  const scored = trips.map((t) => scoreDrivingHealth(t));
 
   const speeds = trips
     .map((t) => t.averageDriveSpeed)
@@ -258,10 +305,11 @@ export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResul
     return {
       health: "unknown",
       mpg: null,
-      label: "No scored trips for this VIN in view",
-      calculation: "n/a — no trip health inputs in current filter",
+      label: "No trips for this VIN in view",
+      calculation: "n/a — no trips in current filter",
       components: [],
-      tripCount: trips.length,
+      avgPoints: null,
+      tripCount: 0,
       scoredCount: 0,
       meanSpeed,
       meanHardBrake,
@@ -270,21 +318,15 @@ export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResul
   }
 
   const avg =
-    scored.reduce((s, h) => {
-      const pts =
-        h.components.reduce((a, c) => a + c.points, 0) / h.components.length;
-      return s + pts;
-    }, 0) / scored.length;
+    scored.reduce((s, h) => s + (h.avgPoints ?? 0), 0) / scored.length;
   const health = bandFromPoints(avg);
 
-  const counts = { healthy: 0, fair: 0, poor: 0 };
+  const counts = { healthy: 0, fair: 0, poor: 0, unknown: 0 };
   for (const h of scored) {
-    if (h.health === "healthy" || h.health === "fair" || h.health === "poor") {
-      counts[h.health] += 1;
-    }
+    counts[h.health] += 1;
   }
 
-  const calculation = `VIN rollup: mean of ${scored.length} trip scores = ${avg.toFixed(2)} → ${health} (trips healthy/fair/poor ${counts.healthy}/${counts.fair}/${counts.poor}; mean avgSpeed ${meanSpeed ?? "—"} mph, mean hardBrake ${meanHardBrake ?? "—"}, mean hardAccel ${meanHardAccel ?? "—"})`;
+  const calculation = `VIN rollup: mean of ${scored.length} trip scores (behavior+dataHealth) = ${avg.toFixed(2)} → ${health} (healthy/fair/poor ${counts.healthy}/${counts.fair}/${counts.poor}; mean avgSpeed ${meanSpeed ?? "—"} mph, mean hardBrake ${meanHardBrake ?? "—"}, mean hardAccel ${meanHardAccel ?? "—"})`;
 
   return {
     health,
@@ -292,6 +334,7 @@ export function scoreVinDrivingHealth(trips: VinTripInput[]): DrivingHealthResul
     label: `${health} over ${scored.length} trip(s)`,
     calculation,
     components: [],
+    avgPoints: avg,
     tripCount: trips.length,
     scoredCount: scored.length,
     meanSpeed,

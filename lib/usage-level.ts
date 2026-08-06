@@ -1,4 +1,6 @@
-// Deterministic green→red usage level from assembled trip flags (shared by AI summary API + UI).
+// Map composite driving health (behavior + data) → green/yellow/orange/red for AI summary box.
+
+import type { DrivingHealth } from "@/lib/driving-health";
 
 export type UsageLevel = "green" | "yellow" | "orange" | "red";
 
@@ -7,46 +9,22 @@ export const USAGE_LEGEND: Array<{
   label: string;
   circle: string;
 }> = [
-  { level: "green", label: "Clean trusted miles", circle: "bg-green-600" },
-  { level: "yellow", label: "Minor data issues", circle: "bg-yellow-400" },
-  { level: "orange", label: "Delayed messy metrics", circle: "bg-orange-500" },
-  { level: "red", label: "Serious data problems", circle: "bg-red-600" },
+  { level: "green", label: "Healthy overall", circle: "bg-green-600" },
+  { level: "yellow", label: "Fair overall", circle: "bg-yellow-400" },
+  { level: "orange", label: "Poor / caution", circle: "bg-orange-500" },
+  { level: "red", label: "Severe overall", circle: "bg-red-600" },
 ];
 
-export function rateUsage(
-  trips: Array<{ assemblyStatus: string; flags: string[] }>,
+/** Map health band → usage color (AI box). Poor → orange; avgPoints ≥ 1.75 → red. */
+export function usageLevelFromHealth(
+  health: DrivingHealth,
+  avgPoints: number | null,
 ): UsageLevel {
-  if (trips.length === 0) return "yellow";
-
-  let hasImpossible = false;
-  let hasDelayed = false;
-  let hasOther = false;
-
-  for (const t of trips) {
-    if (
-      t.assemblyStatus === "IMPOSSIBLE_ODOMETER" ||
-      t.flags.includes("impossible_odometer")
-    ) {
-      hasImpossible = true;
-    } else if (
-      t.assemblyStatus === "METRICS_DELAYED" ||
-      t.flags.includes("metrics_delayed")
-    ) {
-      hasDelayed = true;
-    } else if (
-      t.flags.includes("duplicate_trip_end") ||
-      t.flags.includes("vin_from_assignment") ||
-      t.assemblyStatus === "INCOMPLETE" ||
-      t.assemblyStatus === "OPEN"
-    ) {
-      hasOther = true;
-    }
-  }
-
-  if (hasImpossible) return "red";
-  if (hasDelayed) return "orange";
-  if (hasOther) return "yellow";
-  return "green";
+  if (health === "unknown" || avgPoints == null) return "yellow";
+  if (avgPoints >= 1.75) return "red";
+  if (health === "healthy") return "green";
+  if (health === "fair") return "yellow";
+  return "orange"; // poor
 }
 
 export function usageOverallLine(level: UsageLevel): string {

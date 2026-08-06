@@ -72,7 +72,7 @@ Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo
 
 ## Driving health score (Mileage review)
 
-Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each trip scores only inputs that exist (fuel and/or `tripMetrics`); missing inputs are skipped, not invented.
+Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each trip composites **behavior + data quality**. Missing behavior inputs are skipped; **dataHealth always participates**.
 
 **Per-input bands → points** (`0` healthy, `1` fair, `2` poor):
 
@@ -82,17 +82,11 @@ Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each tri
 | `averageDriveSpeed` | ≤ 35 mph | 36–50 | &gt; 50 |
 | `hardBrakingCounts` | 0 | 1–2 | ≥ 3 |
 | `hardAccelerationCounts` | 0 | 1–2 | ≥ 3 |
+| `dataHealth` (flags / assembly) | clean COMPLETE | `duplicate_trip_end`, `revised_metrics`, `vin_from_assignment`, INCOMPLETE/OPEN | `IMPOSSIBLE_ODOMETER`, `METRICS_DELAYED` |
 
-**Overall:** average the points of present components:
+**Trip overall:** average points → healthy (&lt;0.75) / fair (&lt;1.5) / poor. Trip **frame + status text color** follow this health (not a separate flag-only rule).
 
-- avg &lt; 0.75 → **healthy**
-- avg &lt; 1.5 → **fair**
-- else → **poor**
-- no inputs → **unknown**
-
-The trip card prints the exact calculation string under **Driving health** (e.g. `avg([fuel …; averageDriveSpeed …; …]) = 1.00 → fair`).
-
-Status color on the card is separate: **COMPLETE** is green unless the trip is **flagged** (e.g. `duplicate_trip_end`) — then the badge stays red even when assembly status is COMPLETE.
+**Device / AI summary color:** roll up trip scores → map health to green / yellow / orange / red (`usageLevelFromHealth`; avgPoints ≥ 1.75 → red).
 
 ---
 

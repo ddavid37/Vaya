@@ -2,12 +2,15 @@
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { scoreDrivingHealth } from "@/lib/driving-health";
+import {
+  scoreDrivingHealth,
+  scoreVinDrivingHealth,
+} from "@/lib/driving-health";
 import {
   aggregateDriveSignals,
   metricsByTransactionId,
 } from "@/lib/trip-metrics-from-raw";
-import { rateUsage, usageOverallLine } from "@/lib/usage-level";
+import { usageLevelFromHealth, usageOverallLine } from "@/lib/usage-level";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +99,8 @@ export async function POST(req: Request) {
       averageDriveSpeed: m?.averageDriveSpeed ?? null,
       hardBrakingCounts: m?.hardBrakingCounts ?? null,
       hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+      assemblyStatus: t.assemblyStatus,
+      flags: t.flags,
     });
     healthCounts[health.health] += 1;
     return {
@@ -116,7 +121,25 @@ export async function POST(req: Request) {
     };
   });
 
-  const level = rateUsage(trips);
+  const deviceHealth = scoreVinDrivingHealth(
+    trips.map((t) => {
+      const miles = num(t.mileageDecision?.trustedMiles);
+      const m = metricsMap.get(t.transactionId);
+      return {
+        miles,
+        fuelConsumed: m?.fuelConsumed ?? null,
+        averageDriveSpeed: m?.averageDriveSpeed ?? null,
+        hardBrakingCounts: m?.hardBrakingCounts ?? null,
+        hardAccelerationCounts: m?.hardAccelerationCounts ?? null,
+        assemblyStatus: t.assemblyStatus,
+        flags: t.flags,
+      };
+    }),
+  );
+  const level = usageLevelFromHealth(
+    deviceHealth.health,
+    deviceHealth.avgPoints,
+  );
   const overallLine = usageOverallLine(level);
 
   const facts = {
@@ -126,6 +149,8 @@ export async function POST(req: Request) {
       to: body.to ?? null,
     },
     usageLevel: level,
+    overallDrivingHealth: deviceHealth.health,
+    overallDrivingHealthCalculation: deviceHealth.calculation,
     assignments: assignments.map((a) => ({
       vin: a.vin,
       startedAt: a.startedAt.toISOString(),
@@ -155,12 +180,14 @@ export async function POST(req: Request) {
     "Use ONLY the JSON facts. Do not invent miles, speeds, counts, VINs, or scan results.",
     "Write 3 to 5 short sentences (still concise) for an ops reader.",
     "You MUST explicitly consider and mention in every summary:",
-    "(1) averageDriveSpeed (use driveSignals.meanAverageDriveSpeedMph and/or trip values),",
+    "(1) averageDriveSpeed,",
     "(2) hardBrakingCounts,",
     "(3) hardAccelerationCounts,",
-    "(4) composite driving health (fuel + averageDriveSpeed + hard brake/accel; see drivingHealthCalculation),",
-    "(5) vehicle scanning tests (use vehicleScanning — note they are placeholders if status is placeholder).",
-    "Also mention trusted miles and notable flagged trips when present.",
+    "(4) composite driving health that INCLUDES dataHealth (flags/assembly) — use overallDrivingHealth and overallDrivingHealthCalculation;",
+    "(5) fuel efficiency where present,",
+    "(6) vehicle scanning tests (placeholder if so).",
+    "The overall color (green/yellow/orange/red) MUST match overall driving health, not data-only flags.",
+    "Also mention trusted miles when present.",
     `End with exactly this sentence (same wording): "${overallLine}"`,
     "Feed VINs are a parallel dataset — do not claim marketplace subscription status.",
   ].join(" ");

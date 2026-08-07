@@ -28,8 +28,6 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ---
 
-
-
 ## 2. Cost it — 15 cars, first year
 
 One dongle per car + software that sends trip data like our feed. **No cameras**. **All numbers below are assumed** for now.
@@ -53,8 +51,6 @@ One dongle per car + software that sends trip data like our feed. **No cameras**
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ---
-
-
 
 ## 3. What is worth paying for
 
@@ -82,8 +78,6 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
-
-
 ## 4. Decision
 
 **Buy now:** the middle stack from §2/§3 for the 15-car pilot (dongle + trip API — no scanners, no continuous fancy GPS).
@@ -91,7 +85,7 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 **Attack now — billing**
 
 - Replace “a number somebody typed” with trip miles + clear source per trip (immidiate - not require special resources.
-- Same overage math as today (`overagePerMile` × miles over allowance) - to better confirm that charge. 
+- Same overage math as today (`overagePerMile` × miles over allowance) - to better confirm that charge.
 
 **Leave alone for now**
 
@@ -109,21 +103,17 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
-## 5. Prove before spending — close in a day
+## 5. Period Miles Number approaval - close in a day
 
-**Biggest question (mileage / overage only):** can we defend the period miles number so “you charged the wrong overage” mostly goes away?
+**Biggest question I picked is** can we defend the period miles number so “you charged the wrong overage” mostly goes away?
 
-**Cheapest same-day close — manual miles + customer signature**
 1. At start and end of the covered period, ops reads the odometer (or one agreed reading at return).
 2. Write start miles, end miles, miles used, allowance, overage miles, and `$` at `overagePerMile`.
 3. Customer signs that they agree those miles for billing.
-4. **Pass:** signed period total on file. **Fail:** no signature / unclear numbers.
 
-That is cheap, immediate, and nearly eliminates most mileage-limit disputes (“a number somebody typed” with no ack). It does not reconstruct the month or replace dongles for dirty trips — those are a separate buy (§4). Dongle spend can wait on a quote; this process runs now.
+That is cheap, immediate, and likely eliminates most mileage-limit disputes (“a number somebody typed” with no ack).
 
 ---
-
-
 
 ## 6. Things I refuse to build
 
@@ -137,8 +127,6 @@ That is cheap, immediate, and nearly eliminates most mileage-limit disputes (“
 Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
 
 ---
-
-
 
 ## Traceability (short)
 

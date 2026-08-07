@@ -1,5 +1,3 @@
-<!-- Living log of every DB schema/data manipulation we make. -->
-
 # DB manipulations & decisions
 
 Living log of every database change we make (migrations, seed transforms, manual fixes, quarantines).  
@@ -29,15 +27,17 @@ If it touches Postgres/Supabase data or schema, it goes here.
 
 ### Quarantine: dual live subscription on `veh-004`
 
-| | |
-|---|---|
-| **Whose fault?** | **Seed fixture**, not our app and not Supabase. The assignment file ships two `ACTIVE` subscriptions on one vehicle. |
-| **Rows** | `sub-004` (driver `drv-004`, start `2026-02-12`) and `sub-026` (driver `drv-020`, start `2026-07-02`) both claimed `veh-004`. |
-| **What we did** | Kept both rows. Set `sub-026.status = CONFLICTING`. Left `sub-004` as `ACTIVE`. |
-| **Rule** | Earliest `startDate` wins (tie-break: `id` asc). |
-| **Why before insert** | The partial unique index rejects two live rows; quarantine must happen at load time or the seed cannot apply. |
-| **Audit** | Inserted `data_conflicts` row type `DUAL_LIVE_SUBSCRIPTION`, subjects `[sub-004, sub-026]`. |
-| **How often?** | Once in this dataset. |
+
+|                       |                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Whose fault?**      | **Seed fixture**, not our app and not Supabase. The assignment file ships two `ACTIVE` subscriptions on one vehicle.          |
+| **Rows**              | `sub-004` (driver `drv-004`, start `2026-02-12`) and `sub-026` (driver `drv-020`, start `2026-07-02`) both claimed `veh-004`. |
+| **What we did**       | Kept both rows. Set `sub-026.status = CONFLICTING`. Left `sub-004` as `ACTIVE`.                                               |
+| **Rule**              | Earliest `startDate` wins (tie-break: `id` asc).                                                                              |
+| **Why before insert** | The partial unique index rejects two live rows; quarantine must happen at load time or the seed cannot apply.                 |
+| **Audit**             | Inserted `data_conflicts` row type `DUAL_LIVE_SUBSCRIPTION`, subjects `[sub-004, sub-026]`.                                   |
+| **How often?**        | Once in this dataset.                                                                                                         |
+
 
 ### Other conflict flags (no row rewrites)
 
@@ -78,6 +78,7 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 **Why:** Part 2 device-keyed telemetry, separate from marketplace. No FK from trips/assignments into `vehicles` — feed VINs do not appear in seed (parallel dataset; see `DECISIONS.md`).
 
 **Design notes:**
+
 - `devices.imei` is the identity.
 - `telemetry_raw.natural_key` unique for idempotent ingest.
 - `trips.transaction_id` unique; assembly status + flags for delayed/impossible cases.
@@ -94,6 +95,7 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 **Action:** Loaded `be/data/feed.jsonl` via `be/scripts/ingest.ts`.
 
 **What we did:**
+
 - Truncated telemetry tables only (`mileage_decisions`, `trips`, `telemetry_raw`, `device_vehicle_assignments`, `devices`) — marketplace untouched.
 - Inserted each JSONL line into `telemetry_raw` with deterministic `natural_key` (idempotent).
 - Ensured `devices` rows by IMEI.
@@ -110,6 +112,7 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 **Action:** Built `trips` + `mileage_decisions` from `telemetry_raw` via `be/scripts/assemble.ts`.
 
 **Rules:**
+
 - Group by `transactionId` (tripStart/End/Metrics + REST `trip`).
 - Prefer event timestamps; last deliveredAt wins for duplicate end/metrics.
 - VIN from fragments or active assignment at `startAt`.
@@ -134,13 +137,3 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ---
 
-## Template for future entries
-
-```md
-## YYYY-MM-DD — short title
-
-**Action:** what ran / who changed what
-**Why:** decision rationale
-**Before → After:** concrete row/schema delta
-**Reversible?** how / command
-```

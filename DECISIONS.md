@@ -299,7 +299,7 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 | `PENDING_INTAKE` | Not bookable; show in ops only. |
 | Timezone | Display America/New_York; store UTC. Seed return event has a naive timestamp — preserve raw, interpret as NY. |
 | Overage example ($252 / 840 mi) | Matches `$0.30` × 840; use plan `overagePerMile` from catalog when computing ledger, not a hardcoded 0.30. |
-| OS | Linux (this environment). README will state it. |
+| OS | macOS (Darwin). Stated in README. |
 
 ### What I would ask on Slack
 

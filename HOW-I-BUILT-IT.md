@@ -1,98 +1,78 @@
 # How I built it
 
-Short story of how I read the brief, what I understood, and how I built step by step. I worked **iteratively**: build a slice of UI → use it → see what was still unclear → fix the next layer. The screens helped me understand the product as much as the schema did.
+How I actually worked — top to bottom — and how that process taught me what the brief was asking for.
 
 ---
 
-## How I worked overall
+## 1. Read the brief
 
-1. Read the question in the brief.
-2. Say in plain words what “done” means.
-3. Build the smallest thing that answers it.
-4. Click through the UI myself.
-5. Notice gaps, then repeat.
+I read the assignment document once, top to bottom. Then I analyzed it and started forming answers myself.
 
-Part 1 got messy once. I rebuilt thinner and kept going with that loop. Same loop for Part 2.
+Where I was unsure what they wanted, I used ChatGPT to understand the asks better. I still did not understand everything at that point — that was okay. Clarity came later while building.
 
 ---
 
-## Part 1 — Marketplace
+## 2. Set up the environment
 
-### Question: supply and demand
+Before answering questions in code, I set up the workplace:
 
-**What I understood:** a driver must see what’s free and commit; ops must see fleet truth. Seed stays as-is — don’t clean contradictions away.
+1. Created the GitHub repo  
+2. Created the matching local workspace and cloned it  
+3. Added fundamental files — `.gitignore`, `README`, imported the assignment PDF and the two data files (`seed.json`, `feed.jsonl`)  
+4. Prepared for later live deploy (Vercel)  
+5. Set up the database on Supabase so I could see schemas and tables visually  
 
-**What I built:**
-
-1. Load `seed.json` into Postgres (quarantine dual-live rows; show them on Conflicts).
-2. Marketplace browse + commit.
-3. Ops fleet view.
-
-**Then I used the UI** and saw: “fleet” is everyone; “my” cars need a personal view later.
-
-### Question: one live commitment per car
-
-**What I understood:** two people cannot win the same car. Concurrent commit → one winner, clear loser (not a 500).
-
-**What I built:**
-
-1. Server commit with row lock + unique live index.
-2. Google sign-in so two real accounts can race (session driver id; client can’t spoof).
-
-**Demo I use:**
-
-1. Chrome Profile A → Gmail #1
-2. Chrome Profile B → Gmail #2
-3. Same free car → Commit together
-4. One wins; other gets `409 VEHICLE_NOT_AVAILABLE`
-
-I tried the race in the UI myself. That’s how I knew the error copy had to be sensible.
-
-### Question: one mid-flight change + what’s owed
-
-**What I understood:** pick one change and explain money without real payments. I picked **early end** (matches seed `ENDING`, frees the car).
-
-**What I built:**
-
-1. **My cars** — only this Google account’s commitments (Ops stays full fleet).
-2. Date picker: schedule end (`ENDING`, charge through chosen date) or end now (`ENDED`, day-prorate).
-3. Ledger lines on the same card (base, miles, overage).
-
-**Then I used My cars** and checked: can I answer “why was I charged that?” from one screen? If not, I fixed the ledger copy.
+Also early: Cursor rules doc (`.cursor/rules/vaya.mdc`) so the agent stayed aligned with my intentions, context, and boundaries. And a secrets-scanning script for non-`main` work / PRs (`scripts/check-secrets.sh` + GitHub Action).
 
 ---
 
-## Part 2 — Telemetry
+## 3. UI first, then questions one by one
 
-### Question: what is this feed even for?
+I did **not** jump straight into every domain question in the abstract. I structured the UI workspace first and worked with the screens in front of me.
 
-**What I understood:** Part 2 is ops **understanding** — “how many miles?” / “why is overage wrong?” — not another marketplace. Device (IMEI) ≠ vehicle. Feed VINs don’t match seed (0 overlap) → parallel dataset, no fake join.
+For each portion of the assignment:
 
-**What I built (in order):**
+1. Write a prompt for that slice  
+2. Run it through Cursor  
+3. Look at the output in the running UI  
+4. Decide if it had real value and if the screen made sense  
+5. Fix / prompt the next slice  
 
-1. Immutable `telemetry_raw` ingest from `feed.jsonl`.
-2. Assemble trips + device assignments (`vinChange` closes/opens windows).
-3. Mileage decision per trip: odo **or** `tripDistance`, never average; store rationale.
-4. `/ops/disputes` (Mileage review) so I could see the story.
-5. Signals + light driving-health heuristic (demo only — not underwriting).
+That iterative loop — build → see → understand → next — is how I continuously learned what I was doing. The UI was not only delivery; it was how I understood the overall picture.
 
-**Iterative UI loop:** each review screen pass showed what was missing — flags, idle next to driver, health colors, assignment history. I didn’t invent the full policy up front; using Review taught me what ops needs to defend a charge.
+Through that, I developed a clearer sense of **what brings value to the platform and what does not**.
 
-**Throwaway:** FK from trips → marketplace `vehicles` — wrong once VINs didn’t match.
+---
 
-**Wrong idea caught:** averaging odo and `tripDistance` looks fair, loses disputes.
+## 4. Part 1 questions (in that loop)
 
-**Hand-checks:** `vinChange`; TX-480041 impossible odo → trust tripDistance; `tripData` raw-only; rationale on Review.
+**Supply / demand** — Driver must see availability and commit; ops must see fleet truth. Seed as-is; quarantine dual-live rows on Conflicts.  
+→ Built marketplace, ops fleet, seed load. Used the screens; saw that “my” cars needed a separate path from full fleet.
 
-**Memo:** `TELEMETRY_MEMO.md`. **Tests:** `npm test` (failure modes from `DECISIONS.md`).
+**One live commitment** — Concurrent commit → one winner, sensible loser (not 500).  
+→ Built lock + unique index + Google sign-in. Demo: two Chrome profiles, two Gmails, same car, Commit together → one win, `409` for the other. I raced it myself in the UI.
 
-Flow I ended on:
+**Mid-flight change + what’s owed** — I picked early end (not swap / plan change).  
+→ Built My cars with date picker + ledger (ENDING vs end-now prorate). Clicked through until “why was I charged that?” was answerable on one card.
 
-```
-Raw telemetry → reconstruct trips → mileage decisions with provenance → ops UI that can defend a charge
-```
+---
 
-DB = facts. Backend = judgment. UI = the operational story (and how I kept learning the picture).
+## 5. Part 2 questions (same loop)
+
+**What is the feed for?** Ops understanding miles / disputes — not another marketplace. Device ≠ vehicle; feed VINs ≠ seed → parallel dataset.  
+→ Ingest raw → assemble trips / assignments → mileage decisions (never average odo and `tripDistance`) → Mileage review UI.
+
+Each pass on Review showed what was missing (flags, idle, health as a demo heuristic, assignment history). I threw away an early FK into marketplace vehicles. Hand-checked `vinChange`, TX-480041, raw-only `tripData`. Memo: `TELEMETRY_MEMO.md`. Tests: `npm test`.
+
+---
+
+## What that process bought me
+
+- Confidence the agent stayed inside my rules (`vaya.mdc`)  
+- Real screens to judge value, not only theory  
+- Clearer read of the brief over time — including what not to build  
+
+DB stores facts. Backend derives judgment. UI tells the story — and was how I learned the story.
 
 ---
 
@@ -106,4 +86,3 @@ DB = facts. Backend = judgment. UI = the operational story (and how I kept learn
 ## CI/CD
 
 - Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
-

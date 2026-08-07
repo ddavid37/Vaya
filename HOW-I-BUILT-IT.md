@@ -23,6 +23,7 @@ Part 1 got messy once. I rebuilt thinner and kept going with that loop. Same loo
 **What I understood:** a driver must see what’s free and commit; ops must see fleet truth. Seed stays as-is — don’t clean contradictions away.
 
 **What I built:**
+
 1. Load `seed.json` into Postgres (quarantine dual-live rows; show them on Conflicts).
 2. Marketplace browse + commit.
 3. Ops fleet view.
@@ -34,13 +35,15 @@ Part 1 got messy once. I rebuilt thinner and kept going with that loop. Same loo
 **What I understood:** two people cannot win the same car. Concurrent commit → one winner, clear loser (not a 500).
 
 **What I built:**
+
 1. Server commit with row lock + unique live index.
 2. Google sign-in so two real accounts can race (session driver id; client can’t spoof).
 
 **Demo I use:**
-1. Chrome Profile A → Gmail #1  
-2. Chrome Profile B → Gmail #2  
-3. Same free car → Commit together  
+
+1. Chrome Profile A → Gmail #1
+2. Chrome Profile B → Gmail #2
+3. Same free car → Commit together
 4. One wins; other gets `409 VEHICLE_NOT_AVAILABLE`
 
 I tried the race in the UI myself. That’s how I knew the error copy had to be sensible.
@@ -50,6 +53,7 @@ I tried the race in the UI myself. That’s how I knew the error copy had to be 
 **What I understood:** pick one change and explain money without real payments. I picked **early end** (matches seed `ENDING`, frees the car).
 
 **What I built:**
+
 1. **My cars** — only this Google account’s commitments (Ops stays full fleet).
 2. Date picker: schedule end (`ENDING`, charge through chosen date) or end now (`ENDED`, day-prorate).
 3. Ledger lines on the same card (base, miles, overage).
@@ -65,6 +69,7 @@ I tried the race in the UI myself. That’s how I knew the error copy had to be 
 **What I understood:** Part 2 is ops **understanding** — “how many miles?” / “why is overage wrong?” — not another marketplace. Device (IMEI) ≠ vehicle. Feed VINs don’t match seed (0 overlap) → parallel dataset, no fake join.
 
 **What I built (in order):**
+
 1. Immutable `telemetry_raw` ingest from `feed.jsonl`.
 2. Assemble trips + device assignments (`vinChange` closes/opens windows).
 3. Mileage decision per trip: odo **or** `tripDistance`, never average; store rationale.
@@ -98,6 +103,7 @@ DB = facts. Backend = judgment. UI = the operational story (and how I kept learn
 - ChatGPT used for better understanding the assighnment and structuring, and generating prompts to the cursor agent.
 - In-app: Disputes ★ AI summary + global floating `?` chat (`OPENAI_API_KEY`), both screen-context aware.
 
-## CI**/CD**
+## CI/CD
 
 - Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
+

@@ -6,8 +6,7 @@ Fifteen cars leave the lot for months. We barely see them until return. Three co
 - **Insurance** — one fleet rate; we can’t tell careful drivers from careless ones
 - **Ops blind spots** — who drove, when damage happened, car outside plan area
 
-**Sources:** `data/feed.jsonl`, `data/seed.json` (NJ dealers).  
-**Costs in §2:** all assumed for now.
+**Sources:** `data/feed.jsonl`, `data/seed.json`.
 
 ---
 
@@ -35,8 +34,6 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ---
 
-
-
 ## 2. Cost it — 15 cars, first year
 
 One dongle per car + software that sends trip data like our feed. **No cameras**. **All numbers below are assumed** for now.
@@ -60,8 +57,6 @@ One dongle per car + software that sends trip data like our feed. **No cameras**
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ---
-
-
 
 ## 3. What is worth paying for
 
@@ -89,8 +84,6 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
-
-
 ## 4. Decision
 
 **Buy now:** the middle stack from §2/§3 for the 15-car pilot (dongle + trip API — no scanners, no continuous fancy GPS).
@@ -115,8 +108,6 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 - Feed VINs don’t match marketplace seed cars — we don’t invent that link (assignment / demo data)
 
 ---
-
-
 
 ## 5. Period Miles Number approaval - close in a day
 

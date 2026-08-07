@@ -1,107 +1,95 @@
-
-
 # How I built it
 
-Notes on process, AI use, and choices that matter for grading. Keep this short and honest.
+Short story of how I read the brief, what I understood, and how I built step by step. I worked **iteratively**: build a slice of UI → use it → see what was still unclear → fix the next layer. The screens helped me understand the product as much as the schema did.
 
 ---
 
-## Part 1 → Part 2 mindset
+## How I worked overall
 
-Part 1 is about **executing** operations (commit, concurrency, early end). Part 2 is about **understanding** them: turn raw telemetry into explainable answers for ops (“how many miles?”, “why is overage wrong?”).
+1. Read the question in the brief.
+2. Say in plain words what “done” means.
+3. Build the smallest thing that answers it.
+4. Click through the UI myself.
+5. Notice gaps, then repeat.
 
-I kept the same principles as Part 1: small architecture, every file with a purpose, only what the assignment needs. After Part 1 got messy once, I rebuilt thinner and put those rules in Cursor so the agent stays aligned.
+Part 1 got messy once. I rebuilt thinner and kept going with that loop. Same loop for Part 2.
 
-For Part 2 I treat it as an **operator-facing product**, not a raw data dump. Schema and ingest landed early so facts exist in Postgres; the dispute screen then drives which assembly and mileage rules we finish. Flow:
+---
+
+## Part 1 — Marketplace
+
+### Question: supply and demand
+
+**What I understood:** a driver must see what’s free and commit; ops must see fleet truth. Seed stays as-is — don’t clean contradictions away.
+
+**What I built:**
+1. Load `seed.json` into Postgres (quarantine dual-live rows; show them on Conflicts).
+2. Marketplace browse + commit.
+3. Ops fleet view.
+
+**Then I used the UI** and saw: “fleet” is everyone; “my” cars need a personal view later.
+
+### Question: one live commitment per car
+
+**What I understood:** two people cannot win the same car. Concurrent commit → one winner, clear loser (not a 500).
+
+**What I built:**
+1. Server commit with row lock + unique live index.
+2. Google sign-in so two real accounts can race (session driver id; client can’t spoof).
+
+**Demo I use:**
+1. Chrome Profile A → Gmail #1  
+2. Chrome Profile B → Gmail #2  
+3. Same free car → Commit together  
+4. One wins; other gets `409 VEHICLE_NOT_AVAILABLE`
+
+I tried the race in the UI myself. That’s how I knew the error copy had to be sensible.
+
+### Question: one mid-flight change + what’s owed
+
+**What I understood:** pick one change and explain money without real payments. I picked **early end** (matches seed `ENDING`, frees the car).
+
+**What I built:**
+1. **My cars** — only this Google account’s commitments (Ops stays full fleet).
+2. Date picker: schedule end (`ENDING`, charge through chosen date) or end now (`ENDED`, day-prorate).
+3. Ledger lines on the same card (base, miles, overage).
+
+**Then I used My cars** and checked: can I answer “why was I charged that?” from one screen? If not, I fixed the ledger copy.
+
+---
+
+## Part 2 — Telemetry
+
+### Question: what is this feed even for?
+
+**What I understood:** Part 2 is ops **understanding** — “how many miles?” / “why is overage wrong?” — not another marketplace. Device (IMEI) ≠ vehicle. Feed VINs don’t match seed (0 overlap) → parallel dataset, no fake join.
+
+**What I built (in order):**
+1. Immutable `telemetry_raw` ingest from `feed.jsonl`.
+2. Assemble trips + device assignments (`vinChange` closes/opens windows).
+3. Mileage decision per trip: odo **or** `tripDistance`, never average; store rationale.
+4. `/ops/disputes` (Mileage review) so I could see the story.
+5. Signals + light driving-health heuristic (demo only — not underwriting).
+
+**Iterative UI loop:** each review screen pass showed what was missing — flags, idle next to driver, health colors, assignment history. I didn’t invent the full policy up front; using Review taught me what ops needs to defend a charge.
+
+**Throwaway:** FK from trips → marketplace `vehicles` — wrong once VINs didn’t match.
+
+**Wrong idea caught:** averaging odo and `tripDistance` looks fair, loses disputes.
+
+**Hand-checks:** `vinChange`; TX-480041 impossible odo → trust tripDistance; `tripData` raw-only; rationale on Review.
+
+**Memo:** `TELEMETRY_MEMO.md`. **Tests:** `npm test` (failure modes from `DECISIONS.md`).
+
+Flow I ended on:
 
 ```
 Raw telemetry → reconstruct trips → mileage decisions with provenance → ops UI that can defend a charge
 ```
 
-The database stores facts. The backend derives judgment. The UI tells the operational story.
+DB = facts. Backend = judgment. UI = the operational story (and how I kept learning the picture).
 
 ---
-
-
-
-## Demonstrating the one-live-commitment invariant
-
-**Decision:** use **Google sign-in** so two real people can race the same car in the UI.
-
-**How it works:** first Google login upserts a `Driver` from that account’s email/name. Commit uses the session driver id (server-side) — the client cannot spoof another driver.
-
-**Demo (simple):**
-
-1. Chrome **Profile A** → Sign in with Gmail #1
-2. Chrome **Profile B** → Sign in with Gmail #2
-3. Both open Marketplace, same free car, **Commit** at the same time
-4. One wins; the other sees a sensible unavailable response (`409 VEHICLE_NOT_AVAILABLE`), not a 500
-
-Two regular Chrome profiles — not Incognito. Same machine, two sessions.
-
-Why not fake “pick a seed driver”? We wanted the video to look like real concurrent demand from two accounts.
-
----
-
-
-
-## Mid-flight change: early end on My cars
-
-**Decision:** pick **end subscription early** (not plan change, not car swap). Manage it on **My cars**, not by hunting through Ops.
-
-**Why early end:** matches seed (`ENDING`), frees the car for the invariant, and forces a clear “what’s owed” ledger without payments.
-
-**Why My cars (not Ops for the driver demo):**
-
-- Ops shows the **entire fleet** from seed (many subscribed cars that are not “mine”). That is correct for fleet truth + conflict quarantine.
-- My cars shows **only this Google account’s** commitments. Early end with a **date picker**, then ledger lines on the same card so someone can answer “why was I charged that?”
-
-**Policy written on the ledger:**
-
-- Schedule end → status `ENDING`, charge full period base through the **chosen** end date + miles/overage lines
-- End now → status `ENDED`, day-prorate base + miles/overage lines
-
-Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo path is Marketplace → My cars → manage → ledger.
-
----
-
-
-
-## Part 2 — living with the feed
-
-- **Throwaway:** early idea of FK from trips into marketplace `vehicles` — feed VINs have zero overlap with seed; parallel dataset instead.
-- **Wrong output caught:** averaging odometer delta with `tripDistance` would look “fair” and lose disputes; policy is pick one source and record the discard.
-- **Hand-checks:** `vinChange` closes/opens assignments; TX-480041 impossible odo trusts tripDistance; `tripData` stays raw-only; `/ops/disputes` shows rationale.
-- Memo: `TELEMETRY_MEMO.md`. Tests: `npm test` (one suite per failure mode in `DECISIONS.md`).
-
----
-
-
-
-## Driving health score (Mileage review)
-
-Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each trip composites **behavior + data quality**. Missing behavior inputs are skipped; **dataHealth always participates**.
-
-**Per-input bands → points** (`0` healthy, `1` fair, `2` poor):
-
-
-| Input                                  | Healthy (0)    | Fair (1)                                                                        | Poor (2)                                 |
-| -------------------------------------- | -------------- | ------------------------------------------------------------------------------- | ---------------------------------------- |
-| Fuel efficiency `miles / fuelConsumed` | ≥ 28 mi/gal    | 18–28                                                                           | < 18                                     |
-| `averageDriveSpeed`                    | ≤ 35 mph       | 36–50                                                                           | > 50                                     |
-| `hardBrakingCounts`                    | 0              | 1–2                                                                             | ≥ 3                                      |
-| `hardAccelerationCounts`               | 0              | 1–2                                                                             | ≥ 3                                      |
-| Idle `totalIdlingTime / tripTime`      | < 10%          | 10–25%                                                                          | > 25%                                    |
-| `dataHealth` (flags / assembly)        | clean COMPLETE | `duplicate_trip_end`, `revised_metrics`, `vin_from_assignment`, INCOMPLETE/OPEN | `IMPOSSIBLE_ODOMETER`, `METRICS_DELAYED` |
-
-
-**Trip overall:** average points → healthy (<0.75) / fair (<1.5) / poor. Trip **frame + status text color** follow this health (not a separate flag-only rule).
-
-**Device / AI summary color:** roll up trip scores → map health to green / yellow / orange / red (`usageLevelFromHealth`; avgPoints ≥ 1.75 → red).
-
----
-
-
 
 ## AI use
 
@@ -113,4 +101,3 @@ Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each tri
 ## CI**/CD**
 
 - Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
-

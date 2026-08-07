@@ -80,19 +80,20 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ## 4. Decide
 
-**Recommendation: yes — instrument the 15-car pilot with a mid-tier gateway + API (routes B+C+G) now.** Of the three costs, we **attack billing**. We **leave insurance rate change and ops blind spots alone for now**.
+**Decision: yes — buy the middle stack from §2/§3 for the 15-car pilot now** (dongle + trip API, no cams/scanners).
 
+**Attack now — billing**
+- Replace “a number somebody typed” with trip miles + clear source per trip
+- Same overage math as today (`overagePerMile` × miles over allowance) — better **evidence**, not a new silent fee
 
-| Cost                | Stance                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------- |
-| **Billing**         | **Attack** — trip ledger + provenance so overage is not only handwriting                          |
-| **Insurance**       | **Leave alone for now** — hard-event exports only; no cams, no underwriting claim                 |
-| **Ops blind spots** | **Leave alone for now** — driver / damage / geofence need data or process this feed does not give |
+**Leave alone for now**
+- **Insurance rate** — keep hard-event exports; don’t buy cams or claim underwriting
+- **Ops blind spots** — who drove, damage timing, outside plan area (not in this feed — see §1)
 
-
-**Known gap (still recommend):** feed VINs have **0 overlap** with `seed.json` marketplace cars. We do **not** invent a subscriber link. Mid-tier still pays for itself as the **billing-evidence pipeline** on instrumented pilot cars; the full “this Google subscriber’s $252 email” waits on a real VIN↔subscription link later.
-
-**What changes what people pay:** telemetry changes **evidence for miles**, not a new silent fee. Overage still follows plan `overagePerMile` × miles over allowance. **Where we operate: NJ / US** (`seed.json` dealers in Englewood, Hackensack, Paramus). We have **no subscriber T&Cs on file to cite** here — before go-live, counsel must put lawful mileage/telematics notice in the agreement. I am not a lawyer.
+**Still true (doesn’t change the buy)**
+- Feed VINs don’t match marketplace seed cars — we don’t invent that link
+- Full “this subscriber’s $252 email” waits on a real car↔subscription join later
+- Operate **NJ / US** (seed dealers). No T&Cs on file to cite — counsel must add mileage/telematics notice before go-live
 
 ---
 

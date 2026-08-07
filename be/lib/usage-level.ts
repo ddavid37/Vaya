@@ -4,17 +4,6 @@ import type { DrivingHealth } from "@/lib/driving-health";
 
 export type UsageLevel = "green" | "yellow" | "orange" | "red";
 
-export const USAGE_LEGEND: Array<{
-  level: UsageLevel;
-  label: string;
-  circle: string;
-}> = [
-  { level: "green", label: "Healthy overall", circle: "bg-green-600" },
-  { level: "yellow", label: "Fair overall", circle: "bg-yellow-400" },
-  { level: "orange", label: "Poor / caution", circle: "bg-orange-500" },
-  { level: "red", label: "Severe overall", circle: "bg-red-600" },
-];
-
 /** Map health band → usage color (AI box). Poor → orange; avgPoints ≥ 1.75 → red. */
 export function usageLevelFromHealth(
   health: DrivingHealth,

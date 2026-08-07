@@ -4,11 +4,10 @@ import { AiSummaryButton } from "@/components/AiSummaryButton";
 import { HandoverEvidence } from "@/components/HandoverEvidence";
 import { db } from "@/lib/db";
 import {
-  healthColor,
-  healthFrameClass,
   scoreDrivingHealth,
   scoreVinDrivingHealth,
 } from "@/lib/driving-health";
+import { healthColor, healthFrameClass } from "@/components/healthUi";
 import { metricsByTransactionId } from "@/lib/trip-metrics-from-raw";
 import Link from "next/link";
 

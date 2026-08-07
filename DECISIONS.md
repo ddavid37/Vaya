@@ -1,8 +1,8 @@
-<!-- Architecture and fork decisions for the Vaya take-home (wider than the build). -->
+
 
 # DECISIONS
 
-Stack: Next.js (App Router), TypeScript, Supabase Postgres, Prisma — path of least explanation per project rules.
+Stack: Next.js (App Router), TypeScript, Supabase Postgres, Prisma, MD.
 
 ---
 
@@ -58,31 +58,37 @@ Not in this build (designed for, not implemented):
   Customer notification bus
 ```
 
+
+
 ### Core domain objects
 
-| Object | Role |
-|---|---|
-| **Vehicle** | Physical asset. Identity is VIN. Status on the row is a *projection*, not the lock. |
-| **Driver** | The human who can hold a commitment. |
-| **Plan** | Catalog: name/tier, monthly miles, overage rate, list price. |
-| **Subscription** | The commitment. Snapshots `monthlyPrice` and plan terms at the moment they matter. Status ∈ {`RESERVED`, `ACTIVE`, `ENDING`, `ENDED`}. |
-| **DomainEvent** | Immutable audit trail for every mutation that could appear in a billing email. |
-| **LedgerEntry** | Explainable money-shaped facts (base period, plan-change proration, overage). No card charges. |
-| **DataConflict** | Quarantine record when seed or runtime state violates an invariant. Visible in ops. Never silently averaged away. |
-| **Device** | Telematics unit, identity = IMEI. |
-| **DeviceVehicleAssignment** | Time-bounded IMEI↔VIN binding. A device can move; a VIN can change under a device (`vinChange`). |
-| **TelemetryRaw** | Exact vendor payload, append-only, idempotent on a natural key. |
-| **Trip** | Assembled billing/ops unit from `tripStart`/`tripEnd`/`tripMetrics` (and REST `trip`) fragments. |
+
+| Object                      | Role                                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vehicle**                 | Physical asset. Identity is VIN. Status on the row is a *projection*, not the lock.                                                    |
+| **Driver**                  | The human who can hold a commitment.                                                                                                   |
+| **Plan**                    | Catalog: name/tier, monthly miles, overage rate, list price.                                                                           |
+| **Subscription**            | The commitment. Snapshots `monthlyPrice` and plan terms at the moment they matter. Status ∈ {`RESERVED`, `ACTIVE`, `ENDING`, `ENDED`}. |
+| **DomainEvent**             | Immutable audit trail for every mutation that could appear in a billing email.                                                         |
+| **LedgerEntry**             | Explainable money-shaped facts (base period, plan-change proration, overage). No card charges.                                         |
+| **DataConflict**            | Quarantine record when seed or runtime state violates an invariant. Visible in ops. Never silently averaged away.                      |
+| **Device**                  | Telematics unit, identity = IMEI.                                                                                                      |
+| **DeviceVehicleAssignment** | Time-bounded IMEI↔VIN binding. A device can move; a VIN can change under a device (`vinChange`).                                       |
+| **TelemetryRaw**            | Exact vendor payload, append-only, idempotent on a natural key.                                                                        |
+| **Trip**                    | Assembled billing/ops unit from `tripStart`/`tripEnd`/`tripMetrics` (and REST `trip`) fragments.                                       |
+
+
+
 
 ### Data model: where it diverges from the obvious shape
 
-**1. Availability is not `vehicles.status`.**
+**1. Availability is not** `vehicles.status`**.**
 
-The obvious model: `AVAILABLE` means bookable, `SUBSCRIBED` means taken. Seed data breaks this on contact — `ENDING` subscriptions still occupy cars, `RESERVED` cars have miles-this-period as if they were driving, and `veh-004` has **two `ACTIVE` subscriptions**. If marketplace reads `vehicles.status`, the invariant is theater.
+The obvious model: `AVAILABLE` means bookable, `SUBSCRIBED` means taken. Seed data breaks this on contact — `ENDING` subscriptions still occupy cars, `RESERVED` cars have miles-this-period as if they were driving, and `veh-004` has **two** `ACTIVE` **subscriptions**. If marketplace reads `vehicles.status`, the invariant is theater.
 
 Forced shape: a **partial unique index** on `subscriptions(vehicle_id)` where `status IN ('RESERVED','ACTIVE','ENDING')`. Live commitment = that set. Vehicle status is derived for display and repaired into `data_conflicts` when it disagrees with the index.
 
-**2. Price lives on the subscription, not on a join to `plans`.**
+**2. Price lives on the subscription, not on a join to** `plans`**.**
 
 Seed has ~10 plan/vehicle/subscription price disagreements. Billing that joins `plans.basePrice` invents charges. Catalog price is what we *offer*; `subscription.monthlyPrice` is what we *owe under*. Plan changes write ledger rows and keep `previousPlanId` / prior price for the email.
 
@@ -102,7 +108,7 @@ Load `seed.json` as-is. Each violation inserts a `data_conflicts` row (type, sub
 
 **Rule:** a vehicle has at most one subscription in `{RESERVED, ACTIVE, ENDING}` at any time.
 
-**Why `ENDING` counts:** the car is still in the driver's hands until `endDate`. Releasing it early for a second booking is how you double-hand a physical object.
+**Why** `ENDING` **counts:** the car is still in the driver's hands until `endDate`. Releasing it early for a second booking is how you double-hand a physical object.
 
 **Enforcement (runtime):**
 
@@ -144,6 +150,8 @@ On early end inside a billing period, write ledger entries:
 - `MILES_INCLUDED` / `MILES_USED` / `OVERAGE` — from subscription miles + plan allowance, with source notes
 - Human-readable `explanation` string on each row so ops / the driver page can paste into an email
 
+
+
 ### Telemetry pipeline (Part 2)
 
 Part 2 is an **ops explainability** product: same Ops shell as Part 1, not a second app. Marketplace tables stay separate (feed VINs ≠ seed VINs — parallel dataset).
@@ -181,32 +189,42 @@ Driving signals (/ops/signals)
 
 Failure modes the schema/tests must survive (from the file, not invented):
 
-| Mode | Evidence in feed | Handling |
-|---|---|---|
-| Device moved between cars | `vinChange` + odometer reset ~34428 → ~12703 on IMEI `…003` | Assignment intervals; never sum miles across the VIN boundary into one vehicle invoice |
-| Out of signal / delayed metrics | IMEI `…002` disconnect Jul 9, reconnect Jul 11; metrics for TX-014..018 arrive in a burst at reconnect | Store raw; assemble when fragments exist; mark trips `METRICS_DELAYED` |
-| Out-of-order delivery | TX-480041 delivered before TX-480040; end odo < start odo | Order by trip time; flag impossible odometer; prefer `tripDistance` with explicit note |
-| Duplicate fragments | duplicate `tripEnd` for TX-480005/036/039; revised metrics for TX-480005 | Idempotent keys; last-writer-wins only for metrics with audit of prior value |
-| REST vs webhook shape | REST `trip` has no VIN, nested differently | Normalize into same trip row; VIN from active assignment at `startTime` |
-| Sparse GPS / tripData | `tripData` breadcrumbs, not trips | Store raw; do not invent trips from them |
-| MIL / battery | present, not billing inputs | Store; out of invoice scope |
+
+| Mode                            | Evidence in feed                                                                                       | Handling                                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Device moved between cars       | `vinChange` + odometer reset ~34428 → ~12703 on IMEI `…003`                                            | Assignment intervals; never sum miles across the VIN boundary into one vehicle invoice |
+| Out of signal / delayed metrics | IMEI `…002` disconnect Jul 9, reconnect Jul 11; metrics for TX-014..018 arrive in a burst at reconnect | Store raw; assemble when fragments exist; mark trips `METRICS_DELAYED`                 |
+| Out-of-order delivery           | TX-480041 delivered before TX-480040; end odo < start odo                                              | Order by trip time; flag impossible odometer; prefer `tripDistance` with explicit note |
+| Duplicate fragments             | duplicate `tripEnd` for TX-480005/036/039; revised metrics for TX-480005                               | Idempotent keys; last-writer-wins only for metrics with audit of prior value           |
+| REST vs webhook shape           | REST `trip` has no VIN, nested differently                                                             | Normalize into same trip row; VIN from active assignment at `startTime`                |
+| Sparse GPS / tripData           | `tripData` breadcrumbs, not trips                                                                      | Store raw; do not invent trips from them                                               |
+| MIL / battery                   | present, not billing inputs                                                                            | Store; out of invoice scope                                                            |
+
+
+
 
 ### Where 15 → 5,000 snaps (build for 15; name the break)
 
-| Seam | At 15 | At 5,000 | Replace first |
-|---|---|---|---|
-| Commitment lock | Row `FOR UPDATE` on vehicle | Lock contention on hot cars / multi-region | Lease/reservation service with short TTL + outbox; still one DB unique constraint as truth |
-| Ops dispute UI | One screen, scan a month of trips | Need search by driver/VIN/period and paging | Same schema; add indexes + query API (not a redesign) |
-| Telemetry ingest | Sync read of jsonl at boot | Webhook flood, retries, backfill | Queue + worker; keep `telemetry_raw` identical |
-| Trip assembly in request path | Fine | CPU on read path | Materialize trips asynchronously from raw |
-| Partial unique index | Perfect | Perfect — this does not snap | Keep forever |
-| Single Postgres | Fine | Reporting vs OLTP fight | Read replica / warehouse for analytics; OLTP keeps commitments |
+
+| Seam                          | At 15                             | At 5,000                                    | Replace first                                                                              |
+| ----------------------------- | --------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Commitment lock               | Row `FOR UPDATE` on vehicle       | Lock contention on hot cars / multi-region  | Lease/reservation service with short TTL + outbox; still one DB unique constraint as truth |
+| Ops dispute UI                | One screen, scan a month of trips | Need search by driver/VIN/period and paging | Same schema; add indexes + query API (not a redesign)                                      |
+| Telemetry ingest              | Sync read of jsonl at boot        | Webhook flood, retries, backfill            | Queue + worker; keep `telemetry_raw` identical                                             |
+| Trip assembly in request path | Fine                              | CPU on read path                            | Materialize trips asynchronously from raw                                                  |
+| Partial unique index          | Perfect                           | Perfect — this does not snap                | Keep forever                                                                               |
+| Single Postgres               | Fine                              | Reporting vs OLTP fight                     | Read replica / warehouse for analytics; OLTP keeps commitments                             |
+
 
 **First replacement at scale:** synchronous telemetry assembly → async workers. The commitment model stays.
 
 ---
 
+
+
 ## 2. Forks (roads not taken)
+
+
 
 ### Fork A — Enforce the invariant on `vehicles.status` vs on subscriptions
 
@@ -215,12 +233,16 @@ Failure modes the schema/tests must survive (from the file, not invented):
 - **Appeal of rejected:** matches how the seed is shaped; fewer joins on the browse page.
 - **Cost of rejected:** seed already lies; two writers both read AVAILABLE and both win; Part 1's simultaneous-commit requirement fails under concurrency. Status becomes a cache we can recompute.
 
+
+
 ### Fork B — SQLite vs local Docker Postgres vs Supabase Postgres
 
 - **Picked:** Supabase-hosted Postgres + Prisma (matches `.cursor/rules` / Vaya-shaped stack).
 - **Rejected:** SQLite (weak `FOR UPDATE` story for the concurrency demo); local Docker Postgres (extra Compose surface for a take-home).
 - **Appeal of rejected options:** zero cloud account (SQLite/Docker); identical SQL to prod (Docker).
 - **Cost of picked:** needs a Supabase project + `DATABASE_URL` in `.env`; connection pooling (`?pgbouncer=true` / pooler port) may be needed later for serverless.
+
+
 
 ### Fork C — Mid-flight: early end vs plan change vs car swap
 
@@ -229,12 +251,16 @@ Failure modes the schema/tests must survive (from the file, not invented):
 - **Appeal of rejected:** plan change is already in the seed (`plan_changed`) and makes a clean “what’s owed” ledger story. Swap is the most physical mid-flight move — two cars, two odometer handovers — and feels closest to the product.
 - **Why not now:** early end hits the live-commitment boundary hardest (when does the slot free?). Plan-change ledger types still exist for seed history; swap is day-two and reuses the same invariant.
 
+
+
 ### Fork C2 — Where does a driver early-end?
 
 - **Picked:** **My cars** (own commitments + date picker + ledger on one card).
 - **Rejected:** make the driver find their car inside full Ops fleet.
 - **Appeal of rejected:** one ops console for everything — fewer screens for a pilot.
 - **Why not:** fleet truth and seed conflicts are not a personal cart. Ops still lists everyone on purpose.
+
+
 
 ### Fork D — Seed dual-ACTIVE: pick winner vs refuse to load vs keep both live
 
@@ -243,12 +269,16 @@ Failure modes the schema/tests must survive (from the file, not invented):
 - **Appeal of rejected:** fail-load feels clean — never ship dirty data. Keep-both feels honest — “seed as-is” with no edits.
 - **Why not:** empty screens fail the demo; two ACTIVE rows break the invariant we’re proving. Quarantine keeps the contradiction visible without lying in the lock.
 
+
+
 ### Fork E — Invoice miles: always odometer delta vs always vendor `tripDistance`
 
 - **Picked:** prefer odometer when start/end present, monotonic, and assignment-stable; else `tripDistance`; never average; always write why.
 - **Rejected:** average the two; or always trust odometer.
 - **Appeal of rejected:** averaging gives ops one simple miles number for the email. Always-odometer matches “read the dash” intuition.
 - **Why not:** `TX-480041` and post-`vinChange` cliffs make blind odo nonsense. Averaging hides the fight between sources — that’s how you lose a dispute. A rule + provenance is boring and defendable.
+
+
 
 ### Fork F — Feed VINs vs seed VINs
 
@@ -259,12 +289,16 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 - **Appeal of rejected:** one pane — “this driver’s overage came from that dongle.” Demo feels more complete.
 - **Why not:** we’d invent a join the files don’t support. Honest to the data we were given; memo says so.
 
+
+
 ### Fork G — Header: Driver/Operator vs Part 1/Part 2
 
 - **Picked:** Part 1 (Marketplace) vs Part 2 (Telemetry) — matches how the brief is graded and how tables are separated.
 - **Rejected (after trying):** Driver vs Operator in the header.
 - **Appeal of rejected:** matches real roles — drivers book cars, ops defends miles. Feels like a product, not an assignment outline.
 - **Why not:** Disputes got blurred into “ops” next to Fleet, and Part 2 is a different dataset. Part 1/Part 2 is clearer for graders; tabs still separate driver vs fleet inside Part 1.
+
+
 
 ### Fork H — Driving health: fuel-only vs composite
 
@@ -273,12 +307,16 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 - **Appeal of rejected:** fuel-only is simple and easy to explain. An LLM score sounds “smart” in a demo.
 - **Why not:** fuel alone is too narrow for “how they drive.” Invented scores aren’t underwriting. Thresholds here are demo heuristics — labeled as such.
 
+
+
 ### Fork I — COMPLETE badge color vs flags
 
 - **Picked:** green when COMPLETE and unflagged; **red when flagged** even if status still says COMPLETE (e.g. `duplicate_trip_end` on TX-480005).
 - **Rejected:** always green for COMPLETE.
 - **Appeal of rejected:** status text and color agree — less “is this a bug?” in the UI.
 - **Why not:** green COMPLETE hides dirty assembly. Red + flags is a “look closer” signal on purpose.
+
+
 
 ### Fork J — Handwriting / insurance / scans
 
@@ -289,32 +327,30 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 
 ---
 
+
+
 ## 3. Calls the brief left unspecified
 
-| Topic | Decision |
-|---|---|
-| Who is "ops"? | `/ops` stays open (no Google required) for the pilot. Marketplace uses Google sign-in so two real accounts can race a commit. |
-| Dealer scope | Pilot copy talks about one dealer; seed has three. Marketplace shows all bookable cars; ops can filter by dealer. |
-| `RESERVED` hold TTL | Seed reservations are months old. Treat RESERVED as live forever until activated/cancelled in this build; ask about TTL on Slack. |
-| `PENDING_INTAKE` | Not bookable; show in ops only. |
-| Timezone | Display America/New_York; store UTC. Seed return event has a naive timestamp — preserve raw, interpret as NY. |
-| Overage example ($252 / 840 mi) | Matches `$0.30` × 840; use plan `overagePerMile` from catalog when computing ledger, not a hardcoded 0.30. |
-| OS | macOS (Darwin). Stated in README. |
 
-### What I would ask on Slack
+| Topic                           | Decision                                                                                                                          |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Who is "ops"?                   | `/ops` stays open (no Google required) for the pilot. Marketplace uses Google sign-in so two real accounts can race a commit.     |
+| Dealer scope                    | Pilot copy talks about one dealer; seed has three. Marketplace shows all bookable cars; ops can filter by dealer.                 |
+| `RESERVED` hold TTL             | Seed reservations are months old. Treat RESERVED as live forever until activated/cancelled in this build; ask about TTL on Slack. |
+| `PENDING_INTAKE`                | Not bookable; show in ops only.                                                                                                   |
+| Timezone                        | Display America/New_York; store UTC. Seed return event has a naive timestamp — preserve raw, interpret as NY.                     |
+| Overage example ($252 / 840 mi) | Matches `$0.30` × 840; use plan `overagePerMile` from catalog when computing ledger, not a hardcoded 0.30.                        |
+| OS                              | macOS (Darwin). Stated in README.                                                                                                 |
 
-1. Reserved hold: auto-expire after N hours, or floor-manager only?
-2. Early end: bill through period end, or day-prorate? (Building both policies behind a flag is worse than one written choice — currently: ENDING keeps charge through `endDate`; immediate END prorates.)
-3. Are feed vehicles intentionally not in seed (separate telemetry pilot), or a packaging miss?
-4. Is `ENDING` still insured/billable as ACTIVE until `endDate`? (Assuming yes.)
 
 ### Next, in order, with another day
 
-1. Ops role / auth (marketplace Google is in; ops still open).
-2. Plan-change mid-cycle UX on top of existing ledger types.
-3. Real webhook endpoint + replay tool (same ingestor).
-4. Car-swap flow with dual odometer capture.
-5. Link table from telemetry VIN/IMEI → fleet vehicle once product confirms identity.
+1. Build the system SDK for external configurations
+2. Ops role / auth (marketplace Google is in; ops still open).
+3. Plan-change mid-cycle UX on top of existing ledger types.
+4. Real webhook endpoint + replay tool (same ingestor).
+5. Car-swap flow with dual odometer capture.
+6. Link table from telemetry VIN/IMEI → fleet vehicle once product confirms identity.
 
 ---
 
@@ -335,3 +371,4 @@ Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 - Driver mobile app / push.
 - Perfect GPS playback / geofence alerts from `tripData`.
 - Fabricated marketplace↔feed VIN joins.
+

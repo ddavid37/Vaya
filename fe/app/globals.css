@@ -2,6 +2,9 @@
 
 @import "tailwindcss";
 
+/* Domain helpers under be/ return Tailwind class strings — scan them too. */
+@source "../../be/lib";
+
 @theme {
   --color-ink: #1a1510;
   --color-mid: #6b6560;

@@ -3,7 +3,19 @@
 "use client";
 
 import { useState } from "react";
-import { USAGE_LEGEND, type UsageLevel } from "@/lib/usage-level";
+import { type UsageLevel } from "@/lib/usage-level";
+
+/** Legend + box styles live here so Tailwind under fe/ emits the color utilities. */
+const USAGE_LEGEND: Array<{
+  level: UsageLevel;
+  label: string;
+  circle: string;
+}> = [
+  { level: "green", label: "Healthy overall", circle: "bg-green-600" },
+  { level: "yellow", label: "Fair overall", circle: "bg-yellow-400" },
+  { level: "orange", label: "Poor / caution", circle: "bg-orange-500" },
+  { level: "red", label: "Severe overall", circle: "bg-red-600" },
+];
 
 const BOX: Record<UsageLevel, string> = {
   green: "border-green-300 bg-green-50",

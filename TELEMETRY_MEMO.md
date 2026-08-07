@@ -54,20 +54,23 @@ Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ## 3. What is worth paying for
 
-Cheap trackers and full platforms can cost **several times** different per car. Pricing pages don’t say which extras help Vaya. Cut for year 1:
+Cheap trackers and full platforms can cost **several times** different per car. Pricing pages don’t say which extras help Vaya. The rest is improves for the following years if they seemed to be relevant.
 
 **Worth paying for** (helps defend overage / keep trip truth)
+
 - Trip odometer start/end
 - Trip metrics on the same trip (distance, hard brake/accel, idle, speeds)
 - Reliable API / reconnect so missing days get caught up
 - Device-move events (`vinChange`) so we don’t bill the wrong car
 - Raw export we can store and show in a dispute
+- FDE team to maintain integrations 
 
 **Not worth paying for yet**
+
 - AI dashcams / cabin cameras
 - Fancy map apps and “driver coaching” polish
 - Truck compliance packs (ELD / IFTA)
-- Premium geofence / “always tracking” GPS (our feed only has sparse crumbs)
+- Premium geofence / “always tracking” GPS (our feed only has sparse crumbs, also for privacy)
 - Body scanners (e.g. UVeye-style) before we can use damage timing in ops
 - Vendor black-box “driver score” sold as insurance truth
 

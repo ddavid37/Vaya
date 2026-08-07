@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import logoSrc from "../assets/vaya-logo.svg";
 
 export type AppPart = "part1" | "part2";
 
@@ -49,7 +50,7 @@ export function AppHeader({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/vaya-logo.svg"
+              src={logoSrc}
               alt="Vaya"
               width={90}
               height={23}

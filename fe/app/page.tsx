@@ -5,6 +5,7 @@ import { CommitForm } from "@/components/CommitForm";
 import { PictureButton } from "@/components/PictureButton";
 import { SignInButton } from "@/components/AuthButtons";
 import { db } from "@/lib/db";
+import carIllustration from "../assets/car-illustration.png";
 import Image from "next/image";
 
 const LIVE = ["RESERVED", "ACTIVE", "ENDING"] as const;
@@ -74,7 +75,7 @@ export default async function MarketplacePage() {
         </div>
         <div className="w-full max-w-xl justify-self-end md:max-w-none">
           <Image
-            src="/car-illustration.png"
+            src={carIllustration}
             alt="Vaya car illustration"
             width={1600}
             height={600}

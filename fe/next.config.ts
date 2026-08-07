@@ -9,6 +9,8 @@ const repoRoot = path.join(__dirname, "..");
 loadEnvConfig(repoRoot);
 
 const nextConfig: NextConfig = {
+  // Emit at repo-root `.next` so Vercel (root directory = .) finds the manifest.
+  distDir: "../.next",
   // Allow imports from ../be (lib, auth, etc.).
   experimental: {
     externalDir: true,

@@ -36,10 +36,13 @@ For each portion of the assignment:
 3. Look at the output in the running UI
 4. Decide if it had real value and if the screen made sense
 5. Fix / prompt the next slice
+6. Final review with myself and using Cursor
 
 That iterative loop — build → see → understand → next — is how I continuously learned what I was doing. The UI was not only delivery; it was how I understood the overall picture.
 
 Through that, I developed a clearer sense of **what brings value to the platform and what does not**.
+
+Lastly, I added an overall review once any major parts are completed - to verify how they are alihn with each other.
 
 ---
 

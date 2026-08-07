@@ -30,7 +30,7 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ## 2. Cost it — 15 cars, first year
 
-One dongle per car + software that sends trip data like our feed. **No cameras.** Not a signed quote — a budget. **All numbers below are guesses** for now.
+One dongle per car + software that sends trip data like our feed. **No cameras**. **All numbers below are assumed** for now.
 
 **Headline:** ~**$75 / car / month** in year 1 → ~**$13.4k** for 15 cars. Low ~$50 / high ~$110 if SaaS and labor swing.
 

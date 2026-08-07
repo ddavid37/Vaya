@@ -1,5 +1,6 @@
 // POST: global contextual AI chat for any Vaya screen (OpenAI).
 
+import { factsForScreen } from "@/lib/ai-screen-facts";
 import { NextResponse } from "next/server";
 import type { ScreenContext } from "@/lib/screen-context";
 
@@ -37,11 +38,16 @@ export async function POST(req: Request) {
   const ctx = body.context;
   const history = (body.history ?? []).slice(-8);
 
+  const liveFacts = ctx
+    ? await factsForScreen(ctx.pathname, ctx.search ?? "")
+    : "";
+
   const system = [
     "You are Vaya’s in-app ops/product assistant for a car-subscription take-home demo.",
     "Answer briefly and clearly (usually 2–6 sentences). Prefer facts about how THIS app works.",
     "You can see which screen the user is on — tailor the answer to that context.",
-    "Do not invent DB rows, miles, or payments. If unsure, say what the UI/code typically does.",
+    "When LIVE SCREEN DATA is provided below, use it to answer counts and lists (e.g. how many Kia cars). Do not invent rows beyond that snapshot.",
+    "If LIVE SCREEN DATA is empty, say you lack a live snapshot and explain what the screen usually shows.",
     "Key product facts:",
     "- Part 1 Marketplace vs Part 2 Telemetry are separate header modes.",
     "- Fleet truth = live commitment lock; Conflicts = seed quarantine.",
@@ -51,6 +57,9 @@ export async function POST(req: Request) {
     ctx
       ? `Current UI context: part=${ctx.part}; screen=${ctx.screen}; path=${ctx.pathname}${ctx.search || ""}; purpose=${ctx.purpose}`
       : "Current UI context: unknown.",
+    liveFacts
+      ? `LIVE SCREEN DATA (from database for this screen):\n${liveFacts}`
+      : "LIVE SCREEN DATA: none for this path.",
   ].join("\n");
 
   const messages = [

@@ -51,6 +51,8 @@ Lastly, I added an overall review once any major parts are completed - to verify
 **Supply / demand** — Driver must see availability and commit; ops must see fleet truth. Seed as-is; quarantine dual-live rows on Conflicts.  
 → Built marketplace, ops fleet, seed load. Used the screens; saw that “my” cars needed a separate path from full fleet.
 
+Fleet Truth shows seed driver names (e.g. Sam Reyes) next to live commitments for readability — labels from `seed.json`, not invented people. They don’t change availability, the one-live-car invariant, ledger math, or conflict quarantine.
+
 **One live commitment (invariant)** — Concurrent commit → one winner, sensible message to the loser (not a 500).
 
 Why Google auth matters here: the critical showcase is **two different real people racing the same car**. A fake “pick driver” dropdown would not look like concurrent demand. So I set up **Auth.js + Google OAuth** (`auth.ts`): first login upserts a `Driver` from the Gmail profile and puts `driverId` on the session JWT. Commit never trusts a client-supplied driver id.

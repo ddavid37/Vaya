@@ -109,20 +109,17 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
+## 5. Prove before spending — close in a day
 
+**Biggest question (mileage / overage only):** can we defend the period miles number so “you charged the wrong overage” mostly goes away?
 
-## 5. Prove before spending — close in a day (feed desk only)
+**Cheapest same-day close — manual miles + customer signature**
+1. At start and end of the covered period, ops reads the odometer (or one agreed reading at return).
+2. Write start miles, end miles, miles used, allowance, overage miles, and `$` at `overagePerMile`.
+3. Customer signs that they agree those miles for billing.
+4. **Pass:** signed period total on file. **Fail:** no signature / unclear numbers.
 
-**Biggest question:** can trip-bounded feed data defend an overage total better than one handwritten number?
-
-**Cheapest close (no vendor call — only** `feed.jsonl` **+ our rule):**
-
-1. Pick **one IMEI** and a date window in the feed.
-2. For each trip: trust odometer delta when start/end are monotonic; else `tripDistance` (never average) — same as `lib/mileage.ts` / `/ops/disputes`.
-3. Sum trusted miles; write the short ops paragraph listing per-trip source + flags (e.g. `vinChange`, `METRICS_DELAYED`, TX-480041).
-4. **Pass:** paragraph is explainable trip-by-trip without inventing miles. **Fail:** you need blends, GPS fiction, or a seed join that is not in the files.
-
-That settles “is the data shape worth buying mid-tier for?” in a day. Price confirmation is a later quote, not the blocker for this judgment.
+That is cheap, immediate, and nearly eliminates most mileage-limit disputes (“a number somebody typed” with no ack). It does not reconstruct the month or replace dongles for dirty trips — those are a separate buy (§4). Dongle spend can wait on a quote; this process runs now.
 
 ---
 

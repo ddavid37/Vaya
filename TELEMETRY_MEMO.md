@@ -35,15 +35,15 @@ One dongle per car + software that sends trip data like our feed. **No cameras.*
 **Headline:** ~**$75 / car / month** in year 1 → ~**$13.4k** for 15 cars. Low ~$50 / high ~$110 if SaaS and labor swing.
 
 
-| Line                        | $ per car per month |
-| --------------------------- | ------------------- |
-| Software (SaaS)             | ~$32                |
-| Dongle hardware ($125÷12)   | ~$10                |
-| Install / move at lot       | ~$7                 |
-| Spare dongles (2 for fleet) | ~$1                 |
-| Ops time (gaps, disputes)   | ~$7                 |
-| Our ingest + dispute tools  | ~$17                |
-| **Total**                   | **~$75**            |
+| Line | $ per car per month | Confirmed / Guess |
+| --- | --- | --- |
+| Software (SaaS) | ~$32 | Guess |
+| Dongle hardware ($125÷12) | ~$10 | Guess |
+| Install / move at lot | ~$7 | Guess |
+| Spare dongles (2 for fleet) | ~$1 | Guess |
+| Ops time (gaps, disputes) | ~$7 | Guess |
+| Our ingest + dispute tools | ~$17 | Guess |
+| **Total** | **~$75** | Guess |
 
 
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.

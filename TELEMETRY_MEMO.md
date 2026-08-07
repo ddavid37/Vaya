@@ -63,7 +63,7 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 - Reliable API / reconnect so missing days get caught up
 - Device-move events (`vinChange`) so we don’t bill the wrong car
 - Raw export we can store and show in a dispute
-- FDE team to maintain integrations 
+- FDE team to maintain integrations
 
 **Not worth paying for yet**
 
@@ -78,22 +78,22 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
-## 4. Decide
+## 4. Decition
 
-**Decision: yes — buy the middle stack from §2/§3 for the 15-car pilot now** (dongle + trip API, no cams/scanners).
+**I would buy for the 15-car pilot now the middle stack from the previous sections** (dongle + trip API, no cams/scanners).
 
 **Attack now — billing**
-- Replace “a number somebody typed” with trip miles + clear source per trip
-- Same overage math as today (`overagePerMile` × miles over allowance) — better **evidence**, not a new silent fee
+
+- Replace “a number somebody typed” with trip miles + clear source per trip.
+- Same overage math as today (`overagePerMile` × miles over allowance) — better evidence. 
 
 **Leave alone for now**
-- **Insurance rate** — keep hard-event exports; don’t buy cams or claim underwriting
-- **Ops blind spots** — who drove, damage timing, outside plan area (not in this feed — see §1)
+
+- **Ops blind spots** — who drove, damage timing, outside plan area (section 1)
 
 **Still true (doesn’t change the buy)**
-- Feed VINs don’t match marketplace seed cars — we don’t invent that link
-- Full “this subscriber’s $252 email” waits on a real car↔subscription join later
-- Operate **NJ / US** (seed dealers). No T&Cs on file to cite — counsel must add mileage/telematics notice before go-live
+
+- Feed VINs don’t match marketplace seed cars - we don’t invent that link - this is a demo data
 
 ---
 

@@ -28,6 +28,8 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ---
 
+
+
 ## 2. Cost it — 15 cars, first year
 
 One dongle per car + software that sends trip data like our feed. **No cameras**. **All numbers below are assumed** for now.
@@ -51,6 +53,8 @@ One dongle per car + software that sends trip data like our feed. **No cameras**
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ---
+
+
 
 ## 3. What is worth paying for
 
@@ -78,6 +82,8 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
+
+
 ## 4. Decision
 
 **Buy now:** the middle stack from §2/§3 for the 15-car pilot (dongle + trip API — no scanners, no continuous fancy GPS).
@@ -103,6 +109,8 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
+
+
 ## 5. Period Miles Number approaval - close in a day
 
 **Biggest question I picked is** can we defend the period miles number so “you charged the wrong overage” mostly goes away?
@@ -120,22 +128,8 @@ That is cheap, immediate, and likely eliminates most mileage-limit disputes (“
 **Refuse (data integrity)**
 
 - Creating new data - only place holders if needed.
-- Geofence / “outside plan for weeks” from sparse `tripData` — crumbs are not continuous presence (fake certainty + overclaims location)
 - Inventing trips from GPS crumbs — not real trips; expands location without clear notice (NJ / US)
-- Continous GPS tracking to preserve drivers privacy
+- A continuous GPS tracking that violate driver's privacy.
 
 ---
-
-
-
-## Traceability (short)
-
-
-| Fact                                                                                     | Source                                     |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData`, odo vs distance gap | `data/feed.jsonl`                          |
-| Dealers NJ / US                                                                          | `data/seed.json`                           |
-| $/car mid ~$75 year-1                                                                    | **All guesses** (§2) — no vendor quote yet |
-| Subscriber T&Cs                                                                          | **None on file** — not cited               |
-
 

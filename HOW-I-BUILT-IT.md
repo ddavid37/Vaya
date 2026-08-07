@@ -1,4 +1,4 @@
-<!-- Process notes for graders: demos, AI use, and key build choices. -->
+
 
 # How I built it
 
@@ -22,6 +22,8 @@ The database stores facts. The backend derives judgment. The UI tells the operat
 
 ---
 
+
+
 ## Demonstrating the one-live-commitment invariant
 
 **Decision:** use **Google sign-in** so two real people can race the same car in the UI.
@@ -40,6 +42,8 @@ Two regular Chrome profiles — not Incognito. Same machine, two sessions.
 Why not fake “pick a seed driver”? We wanted the video to look like real concurrent demand from two accounts.
 
 ---
+
+
 
 ## Mid-flight change: early end on My cars
 
@@ -61,6 +65,8 @@ Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo
 
 ---
 
+
+
 ## Part 2 — living with the feed
 
 - **Throwaway:** early idea of FK from trips into marketplace `vehicles` — feed VINs have zero overlap with seed; parallel dataset instead.
@@ -70,30 +76,41 @@ Ops keeps fleet-level early-end buttons for the pilot; the video / personal demo
 
 ---
 
+
+
 ## Driving health score (Mileage review)
 
 Demo heuristic in `lib/driving-health.ts` — **not** an insurer model. Each trip composites **behavior + data quality**. Missing behavior inputs are skipped; **dataHealth always participates**.
 
 **Per-input bands → points** (`0` healthy, `1` fair, `2` poor):
 
-| Input | Healthy (0) | Fair (1) | Poor (2) |
-|---|---|---|---|
-| Fuel efficiency `miles / fuelConsumed` | ≥ 28 mi/gal | 18–28 | &lt; 18 |
-| `averageDriveSpeed` | ≤ 35 mph | 36–50 | &gt; 50 |
-| `hardBrakingCounts` | 0 | 1–2 | ≥ 3 |
-| `hardAccelerationCounts` | 0 | 1–2 | ≥ 3 |
-| Idle `totalIdlingTime / tripTime` | &lt; 10% | 10–25% | &gt; 25% |
-| `dataHealth` (flags / assembly) | clean COMPLETE | `duplicate_trip_end`, `revised_metrics`, `vin_from_assignment`, INCOMPLETE/OPEN | `IMPOSSIBLE_ODOMETER`, `METRICS_DELAYED` |
 
-**Trip overall:** average points → healthy (&lt;0.75) / fair (&lt;1.5) / poor. Trip **frame + status text color** follow this health (not a separate flag-only rule).
+| Input                                  | Healthy (0)    | Fair (1)                                                                        | Poor (2)                                 |
+| -------------------------------------- | -------------- | ------------------------------------------------------------------------------- | ---------------------------------------- |
+| Fuel efficiency `miles / fuelConsumed` | ≥ 28 mi/gal    | 18–28                                                                           | < 18                                     |
+| `averageDriveSpeed`                    | ≤ 35 mph       | 36–50                                                                           | > 50                                     |
+| `hardBrakingCounts`                    | 0              | 1–2                                                                             | ≥ 3                                      |
+| `hardAccelerationCounts`               | 0              | 1–2                                                                             | ≥ 3                                      |
+| Idle `totalIdlingTime / tripTime`      | < 10%          | 10–25%                                                                          | > 25%                                    |
+| `dataHealth` (flags / assembly)        | clean COMPLETE | `duplicate_trip_end`, `revised_metrics`, `vin_from_assignment`, INCOMPLETE/OPEN | `IMPOSSIBLE_ODOMETER`, `METRICS_DELAYED` |
+
+
+**Trip overall:** average points → healthy (<0.75) / fair (<1.5) / poor. Trip **frame + status text color** follow this health (not a separate flag-only rule).
 
 **Device / AI summary color:** roll up trip scores → map health to green / yellow / orange / red (`usageLevelFromHealth`; avgPoints ≥ 1.75 → red).
 
 ---
 
+
+
 ## AI use
 
-- Used Cursor agents for scaffolding, schema, and UI brand pass from `website_resources/`.
+- Used Cursor agents for scaffolding, schema, and UI building - allmost for everything. I used a rules doc 'vaya.mdc' to alighn every action that I intent to do by the agent with the predefined context and guardrails.
 - Hand-checked: seed dual-ACTIVE quarantine, commit lock + unique index, early-end ledger copy, Google env wiring, My cars manage UX, feed ingest/assemble, dispute screen copy.
-- ChatGPT used for structuring Part 2 process notes; outcomes verified against the feed and assignment brief.
+- ChatGPT used for better understanding the assighnment and structuring, and generating prompts to the cursor agent.
 - In-app: Disputes ★ AI summary + global floating `?` chat (`OPENAI_API_KEY`), both screen-context aware.
+
+## CI**/CD**
+
+- Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
+

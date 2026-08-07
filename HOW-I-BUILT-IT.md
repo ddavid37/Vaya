@@ -51,8 +51,18 @@ Lastly, I added an overall review once any major parts are completed - to verify
 **Supply / demand** — Driver must see availability and commit; ops must see fleet truth. Seed as-is; quarantine dual-live rows on Conflicts.  
 → Built marketplace, ops fleet, seed load. Used the screens; saw that “my” cars needed a separate path from full fleet.
 
-**One live commitment** — Concurrent commit → one winner, sensible messege to the loser (not 500 error messege).  
-→ Built lock + unique index + Google sign-in. Demo: two Chrome profiles, two Gmails, same car, Commit together → one win, `409` for the other. I raced it myself in the UI.
+**One live commitment (invariant)** — Concurrent commit → one winner, sensible message to the loser (not a 500).
+
+Why Google auth matters here: the critical showcase is **two different real people racing the same car**. A fake “pick driver” dropdown would not look like concurrent demand. So I set up **Auth.js + Google OAuth** (`auth.ts`): first login upserts a `Driver` from the Gmail profile and puts `driverId` on the session JWT. Commit never trusts a client-supplied driver id.
+
+How commit is wired:
+1. UI **Commit** → `POST /api/subscriptions` with `vehicleId` + `planId`  
+2. API reads `session.driverId` (401 if signed out)  
+3. `createSubscription` in `lib/subscriptions.ts` runs a DB transaction: `SELECT … FROM vehicles … FOR UPDATE`, then insert `ACTIVE` subscription  
+4. Postgres **partial unique index** `subscriptions_one_live_per_vehicle` on `vehicle_id` where status ∈ `RESERVED | ACTIVE | ENDING` — that is the real enforcement  
+5. Unique violation (`P2002`) → API **409** `VEHICLE_NOT_AVAILABLE` → UI shows that code next to Commit  
+
+**Demo (invariant showcase):** Chrome Profile A + Gmail #1, Profile B + Gmail #2, same free car, Commit together → one wins, the other sees `VEHICLE_NOT_AVAILABLE: Vehicle already has a live commitment`. I raced it myself. The UI message is the surface; the index + lock are where the invariant holds.
 
 **Mid-flight change + what’s owed** — I picked early end (not swap / plan change).  
 → Built My cars with date picker + ledger (ENDING vs end-now prorate). Clicked through until “why was I charged that?” was answerable on one card.
@@ -61,10 +71,28 @@ Lastly, I added an overall review once any major parts are completed - to verify
 
 ## 5. Part 2 questions (same loop)
 
-**What is the feed for?** Ops understanding miles / disputes — not another marketplace. Device ≠ vehicle; that's a parallel dataset that not intersecting.  
-→ Ingest raw → assemble trips / assignments → mileage decisions →  review UI.
+**What is the feed for?** Ops understanding miles / disputes — not another marketplace. Device ≠ vehicle; parallel dataset (feed VINs don’t match seed).  
+→ Ingest raw → assemble trips / assignments → mileage decisions → review UI.
 
 Each pass on Review showed what was missing (flags, idle, health as a demo heuristic, assignment history). I threw away an early FK into marketplace vehicles. Hand-checked `vinChange`, TX-480041, raw-only `tripData`. Memo: `TELEMETRY_MEMO.md`. Tests: `npm test`.
+
+---
+
+## Technical steps (what actually landed in the stack)
+
+Rough build order after the repo existed:
+
+1. **Prisma schema + migrations** on Supabase (`DATABASE_URL`) — marketplace tables, then telemetry tables later  
+2. **Partial unique index** for one live sub per vehicle (migration SQL)  
+3. **`npm run db:seed`** — load seed as-is; quarantine dual-live into `CONFLICTING` + `data_conflicts`  
+4. **Next.js App Router UI** — Marketplace, My cars, Fleet, Conflicts; later Part 2 Review / Signals  
+5. **Auth.js Google** — env `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` / `AUTH_SECRET`; callback upserts `Driver`  
+6. **Commit API** — `POST /api/subscriptions` → session driver → `FOR UPDATE` + create → 409 on conflict  
+7. **Early-end API / My cars** — schedule or end-now; ledger rows with explanations  
+8. **Telemetry** — `npm run db:ingest` / `db:assemble`; `lib/mileage.ts` decide miles; `/ops/disputes`  
+9. **Docs** — `DECISIONS.md`, `DB.md`, `TELEMETRY_MEMO.md`, this file  
+
+I kept using the running app after each step so the next technical piece was driven by what the screen still couldn’t explain.
 
 ---
 
@@ -72,7 +100,8 @@ Each pass on Review showed what was missing (flags, idle, health as a demo heuri
 
 - Confidence the agent stayed inside my rules (`vaya.mdc`)  
 - Real screens to judge value, not only theory  
-- Clearer read of the assignment description over time.
+- Clearer read of the assignment description over time  
+- A demo path that proves the invariant with two authenticated accounts, not only a UI label  
 
 ---
 

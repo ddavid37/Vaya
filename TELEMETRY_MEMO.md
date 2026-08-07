@@ -1,6 +1,13 @@
 # Telemetry memo
 
-Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Sources: `data/feed.jsonl`, `data/seed.json` (NJ dealers). Cost numbers in §2 are **all guesses** for now.
+Fifteen cars leave the lot for months. We barely see them until return. Three costs today:
+
+- **Billing** — overage from two handwritten odometer reads
+- **Insurance** — one fleet rate; we can’t tell careful drivers from careless ones
+- **Ops blind spots** — who drove, when damage happened, car outside plan area
+
+**Sources:** `data/feed.jsonl`, `data/seed.json` (NJ dealers).  
+**Costs in §2:** all assumed for now.
 
 ---
 

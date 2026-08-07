@@ -11,8 +11,8 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 **Currently possible**
 
 - Trip start/end with odometer (when present) and fuel
-- Second distance + behavior: `tripDistance`, hard brake/accel, idle, avg/max speed
-- Period miles with provenance (pick odo **or** `tripDistance` per trip — never blend)
+- Distance + behavior: `tripDistance`, hard brake/accel, idle, avg/max speed
+- Period miles with provenance (pick odo **or** `tripDistance` per trip
 - Device≠vehicle handling via `vinChange` event from the given data
 - Catch-up after gaps (REST `trip`, delayed `tripMetrics`)
 - pickup/return (if there is) location - recorded manualy by the represenative.
@@ -20,9 +20,10 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 **Currently not possible**
 
 - Who was driving
+- Drivers insurance records
 - chagne in car condition (comparing the car scanning at the beginning vs return)
 - When damage happened during the holding period
-- Continuous location / “sat outside plan area for weeks” (no active GPS tracking)
+- Continuous location / (eg. “sat outside plan area for weeks”) (no active GPS tracking)
 - Treating feed cars as the same cars as the marketplace seed (VINs don’t match)
 
 ---

@@ -30,23 +30,20 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ## 2. Cost it — 15 cars, first year
 
-**Stack:** one gateway/car + platform for B+C+E, **no cameras**. Feed vendor unnamed → budget model, not a signed quote.  
+One dongle per car + software that sends trip data like our feed. **No cameras.** Not a signed quote — a budget.
 
-These 
+**Headline:** ~**$75 / car / month** in year 1 → ~**$13.4k** for 15 cars. Low ~$50 / high ~$110 if SaaS and labor swing.
 
-
-| Line                            | $/car/mo year-1     | Confirmed / Guess       | Where the number came from                                                                     |
-| ------------------------------- | ------------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| Platform SaaS                   | **$32**             | **Guess** (band $25–40) | Reseller/commercial ranges in 2026 industry writeups; majors are quote-only on marketing sites |
-| Gov list anchor (not our quote) | $39 VG license      | **Confirmed**           | Samsara Sourcewell-style cooperative sheet (LIC-VG-ENT) via published writeups                 |
-| Hardware amortized              | **~$10** ($125÷12)  | **Guess**               | Typical gateway ~$80–150 in reseller commentary                                                |
-| Install + swap contingency      | **~$7**             | **Guess**               | Not on pricing pages; lot labor                                                                |
-| Spares (2 units / 15)           | **~$1**             | **Guess**               | Feed shows `vinChange` — need spares                                                           |
-| Ops labor (reconnect/dispute)   | **~$7**             | **Guess**               | ~2 hr/mo @ $50; pattern from IMEI `…002` delay, hours not measured                             |
-| Our ingest/dispute tooling      | **~$17**            | **Guess**               | Internal pilot eng+host ~$250/mo ÷ 15                                                          |
-| **Mid total**                   | **~$75 / car / mo** | Blended                 | **~$13.4k** fleet year-1                                                                       |
-| Low / high (no cams)            | ~$50 / ~$110        | Guess                   | SaaS+labor swing                                                                               |
-
+| Line | $/car/mo year-1 | Confirmed / Guess | Where from |
+| --- | --- | --- | --- |
+| Software (SaaS) | **$32** | **Guess** ($25–40 band) | Industry writeups; vendors usually quote-only |
+| Public list price (anchor only) | $39 | **Confirmed** | Samsara-style gov sheet (LIC-VG-ENT) — not our quote |
+| Dongle hardware | **~$10** ($125÷12) | **Guess** | Typical ~$80–150 once |
+| Install / move at lot | **~$7** | **Guess** | Not on pricing page |
+| Spare dongles (2 for fleet) | **~$1** | **Guess** | Devices move (`vinChange`) |
+| Ops time (gaps, disputes) | **~$7** | **Guess** | ~2 hr/mo @ $50 |
+| Our ingest + dispute tools | **~$17** | **Guess** | ~$250/mo shared ÷ 15 |
+| **Mid total** | **~$75** | Mostly guess | **~$13.4k** fleet year-1 |
 
 ---
 

@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import logoSrc from "../assets/vaya-logo.svg";
+import { VayaLogo } from "./VayaLogo";
 
 export type AppPart = "part1" | "part2";
 
@@ -48,14 +48,7 @@ export function AppHeader({
             href={part === "part1" ? "/" : "/ops/disputes"}
             className="flex shrink-0 items-baseline gap-1.5 no-underline md:gap-2"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={logoSrc}
-              alt="Vaya"
-              width={90}
-              height={23}
-              className="h-[18px] w-auto md:h-[23px]"
-            />
+            <VayaLogo className="h-[18px] w-auto md:h-[23px]" />
             <span className="font-sans text-[0.55rem] leading-none font-bold tracking-[-0.02em] text-ink uppercase md:text-[0.7rem]">
               demo
             </span>

@@ -14,9 +14,9 @@ On the live site, use the header **Part 1** / **Part 2** buttons to switch modes
 
 ## Deliverables
 
-- [DECISIONS.md](./DECISIONS.md) — architecture, forks, invariant
-- [HOW-I-BUILT-IT.md](./HOW-I-BUILT-IT.md) — process, AI use, demo path
-- [TELEMETRY_MEMO.md](./TELEMETRY_MEMO.md) — Part 2 memo (buy / refuse / cost)
+- [DECISIONS.md](./DECISIONS.md)
+- [HOW-I-BUILT-IT.md](./HOW-I-BUILT-IT.md)
+- [TELEMETRY_MEMO.md](./TELEMETRY_MEMO.md)
 
 ## Run locally (optional)
 

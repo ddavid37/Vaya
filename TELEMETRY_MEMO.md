@@ -34,15 +34,17 @@ One dongle per car + software that sends trip data like our feed. **No cameras.*
 
 **Headline:** ~**$75 / car / month** in year 1 → ~**$13.4k** for 15 cars. Low ~$50 / high ~$110 if SaaS and labor swing.
 
-| Line | $/car/mo year-1 |
-| --- | --- |
-| Software (SaaS) | ~$32 |
-| Dongle hardware ($125÷12) | ~$10 |
-| Install / move at lot | ~$7 |
-| Spare dongles (2 for fleet) | ~$1 |
-| Ops time (gaps, disputes) | ~$7 |
-| Our ingest + dispute tools | ~$17 |
-| **Total** | **~$75** |
+
+| Line                        | $ per car per month |
+| --------------------------- | ------------------- |
+| Software (SaaS)             | ~$32                |
+| Dongle hardware ($125÷12)   | ~$10                |
+| Install / move at lot       | ~$7                 |
+| Spare dongles (2 for fleet) | ~$1                 |
+| Ops time (gaps, disputes)   | ~$7                 |
+| Our ingest + dispute tools  | ~$17                |
+| **Total**                   | **~$75**            |
+
 
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
@@ -109,11 +111,11 @@ Why these: each looks useful on a slide and fails the first dispute — or overc
 ## Traceability (short)
 
 
-| Fact                                                                                     | Source                                                                                  |
-| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData`, odo vs distance gap | `data/feed.jsonl`                                                                       |
-| Dealers NJ / US                                                                          | `data/seed.json`                                                                        |
-| $/car mid ~$75 year-1                                                                    | **All guesses** (§2) — no vendor quote yet                                              |
-| Subscriber T&Cs                                                                          | **None on file** — not cited                                                            |
+| Fact                                                                                     | Source                                     |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Event types, `vinChange`, delay burst, TX-480041, sparse `tripData`, odo vs distance gap | `data/feed.jsonl`                          |
+| Dealers NJ / US                                                                          | `data/seed.json`                           |
+| $/car mid ~$75 year-1                                                                    | **All guesses** (§2) — no vendor quote yet |
+| Subscriber T&Cs                                                                          | **None on file** — not cited               |
 
 

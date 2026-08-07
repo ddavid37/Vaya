@@ -40,12 +40,12 @@ One dongle per car + software that sends trip data like our feed. **No cameras**
 | Line                        | $ per car per month | Confirmed / Assumed |
 | --------------------------- | ------------------- | ------------------- |
 | Software (SaaS)             | ~$32                | Assumed             |
-| Dongle hardware ($125÷12)   | ~$10                | Assumed             |
+| Dongle hardware             | ~$10                | Assumed             |
 | Install / move at lot       | ~$7                 | Assumed             |
 | Spare dongles (2 for fleet) | ~$1                 | Assumed             |
 | Ops time (gaps, disputes)   | ~$7                 | Assumed             |
 | Our ingest + dispute tools  | ~$17                | Assumed             |
-| **Total**                   | **~$75**            | Assumed            |
+| **Total**                   | **~$75**            | Assumed             |
 
 
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
@@ -54,13 +54,24 @@ Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ## 3. What is worth paying for
 
-Cheap trackers and cam-heavy platforms differ by **several times per car**. For Vaya:
+Cheap trackers and full platforms can cost **several times** different per car. Pricing pages don’t say which extras help Vaya. Cut for year 1:
 
-**Pay for:** trip odometer (B), trip metrics on same `transactionId` (C), reconnect/API so days are not lost (G), device-move events (`vinChange`), raw export we can store. These defend overage and start an insurance *conversation*.
+**Worth paying for** (helps defend overage / keep trip truth)
+- Trip odometer start/end
+- Trip metrics on the same trip (distance, hard brake/accel, idle, speeds)
+- Reliable API / reconnect so missing days get caught up
+- Device-move events (`vinChange`) so we don’t bill the wrong car
+- Raw export we can store and show in a dispute
 
-**Do not pay for (year-1):** AI dashcams, coaching/map theater, ELD/IFTA truck bundles, geofence SKUs on sparse GPS, vendor black-box “driver score” as underwriting.
+**Not worth paying for yet**
+- AI dashcams / cabin cameras
+- Fancy map apps and “driver coaching” polish
+- Truck compliance packs (ELD / IFTA)
+- Premium geofence / “always tracking” GPS (our feed only has sparse crumbs)
+- Body scanners (e.g. UVeye-style) before we can use damage timing in ops
+- Vendor black-box “driver score” sold as insurance truth
 
-**Target quote:** mid SaaS (~$25–40/mo) + gateway — not the floor, not the cam ceiling.
+**Buy the middle:** ~$25–40/mo software + dongle (the §2 budget) — not the cheapest pin-on-a-map tracker, not the cam + scanner stack.
 
 ---
 

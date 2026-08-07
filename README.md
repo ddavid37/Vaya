@@ -6,17 +6,19 @@ Car subscription marketplace (Part 1) + telemetry (Part 2).
 
 **Built on:** macOS (Darwin).
 
-## Run (both parts — one command)
+**Live deployment:** [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app)
 
-Part 1 and Part 2 live in the same app (header toggle). After setup:
+## Run — one command for both parts
+
+Part 1 (Marketplace) and Part 2 (Telemetry) are the **same app**. You do **not** need two start commands.
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Use **Part 1 Marketplace** / **Part 2 Telemetry** in the header.
+Then open [http://localhost:3000](http://localhost:3000) and use the header **Part 1** / **Part 2** buttons to switch modes in the UI (tabs change with the part).
 
-Live demo: [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app)
+Same on the live site: [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app) → click **Part 1** / **Part 2**.
 
 ## Workflow
 
@@ -35,10 +37,10 @@ Next.js (App Router), TypeScript, Prisma, Supabase Postgres, Auth.js (Google).
 - `be/data/seed.json` — marketplace seed/reference data
 - `be/data/feed.jsonl` — append-only telemetry stream
 
-## Setup
+## Setup (first time)
 
 1. Create `.env` at the repo root. Set `DATABASE_URL`, `AUTH_SECRET`, Google OAuth vars, and optionally `OPENAI_API_KEY` for Disputes ★ AI summaries.
-2. Install, migrate, seed, run:
+2. Install, migrate, load data, then the one run command:
 
 ```bash
 npm install
@@ -48,6 +50,8 @@ npm run db:ingest
 npm run db:assemble
 npm run dev
 ```
+
+After that, day-to-day is only `npm run dev`.
 
 `db:seed` loads `be/data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
 
@@ -71,15 +75,13 @@ npm test
 
 ## App
 
-One header part at a time (toggle **Part 1** ↔ **Part 2** next to Sign in/out).
-
-**Part 1 — Marketplace**
+**Part 1 — Marketplace** (header **Part 1**)
 - `/` — marketplace (Google sign-in + commit)
 - `/mine` — your commitments: early end (date picker) + ledger + monthly total
 - `/ops` — fleet + early end
 - `/ops/conflicts` — seed/runtime conflict quarantine
 
-**Part 2 — Telemetry**
+**Part 2 — Telemetry** (header **Part 2**)
 - `/ops/disputes` — Mileage review (trips, driver unknown, manual confirm, scan/insurance placeholders, ★ AI)
 - `/ops/signals` — driving signals (avg speed, maxSpeed, hard accel/brake from tripMetrics)
 

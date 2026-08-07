@@ -10,6 +10,5 @@ export const db =
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
-}
+// Reuse across hot reloads (dev) and warm serverless isolates (prod).
+globalForPrisma.prisma = db;

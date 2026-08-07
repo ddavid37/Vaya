@@ -23,12 +23,9 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 - chagne in car condition (comparing the car scanning at the beginning vs return)
 - When damage happened during the holding period
 - Continuous location / “sat outside plan area for weeks” (no active GPS tracking)
-- Averaging odometer and trip distance into one miles number (they disagree)
 - Treating feed cars as the same cars as the marketplace seed (VINs don’t match)
 
 ---
-
-
 
 ## 2. Cost it — 15 cars, first year
 
@@ -52,8 +49,6 @@ These
 
 ---
 
-
-
 ## 3. What is worth paying for
 
 Cheap trackers and cam-heavy platforms differ by **several times per car**. For Vaya:
@@ -65,8 +60,6 @@ Cheap trackers and cam-heavy platforms differ by **several times per car**. For 
 **Target quote:** mid SaaS (~$25–40/mo) + gateway — not the floor, not the cam ceiling.
 
 ---
-
-
 
 ## 4. Decide
 
@@ -86,8 +79,6 @@ Cheap trackers and cam-heavy platforms differ by **several times per car**. For 
 
 ---
 
-
-
 ## 5. Prove before spending — close in a day (feed desk only)
 
 **Biggest question:** can trip-bounded feed data defend an overage total better than one handwritten number?
@@ -103,8 +94,6 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 
 ---
 
-
-
 ## 6. Things I refuse to build
 
 **Primary refuse — data integrity:** averaging odometer delta with `tripDistance` into one “smart miles” number. The feed gives two disagreeing estimates; blending invents a third. Pick one source per trip, record the discard — or bill nothing.
@@ -117,8 +106,6 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
 
 ---
-
-
 
 ## Traceability (short)
 

@@ -117,14 +117,14 @@ That is cheap, immediate, and likely eliminates most mileage-limit disputes (“
 
 ## 6. Things I refuse to build
 
-**Primary refuse — data integrity:** averaging odometer delta with `tripDistance` into one “smart miles” number. The feed gives two disagreeing estimates; blending invents a third. Pick one source per trip, record the discard — or bill nothing.
+**Refuse (data integrity)**
+- Averaging odometer and `tripDistance` into one “smart miles” number — they disagree; blending invents a third. Pick one per trip, or bill nothing.
 
-**Also refuse — integrity + privacy (location):**
+**Refuse (integrity + privacy)**
+- Geofence / “outside plan for weeks” from sparse `tripData` — crumbs are not continuous presence (fake certainty + overclaims location)
+- Inventing trips from GPS crumbs — not real trips; expands location without clear notice (NJ / US)
 
-1. **Geofence / “outside plan area for weeks” from sparse** `tripData`**.** A handful of GPS crumbs are not continuous presence. Shipping that alert fabricates certainty (**data integrity**) and treats thin location samples like ongoing tracking of where someone lives/parks — a use we should not imply without clear notice and a lawful basis under **NJ/US** privacy expectations for location data (**privacy**). Store crumbs raw; do not productize the story.
-2. **Inventing trips from GPS crumbs.** Turning breadcrumbs into billing/ops “trips” invents events that were never delivered as trips (**data integrity**) and expands location into a movement history the subscriber was not clearly signed up for (**privacy**). Trips come from `tripStart`/`tripEnd`/`tripMetrics` (and REST `trip`), not from `tripData`.
-
-Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
+Store GPS crumbs raw. Do not productize them.
 
 ---
 

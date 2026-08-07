@@ -14,12 +14,14 @@ export const dynamic = "force-dynamic";
 export default async function MarketplacePage() {
   const session = await auth();
 
-  const [vehicles, plans, driver] = await Promise.all([
+  const [bookable, plans, driver] = await Promise.all([
+    // Only cars that can be committed — smaller query after Google redirect.
     db.vehicle.findMany({
-      include: {
-        dealer: true,
-        subscriptions: { where: { status: { in: [...LIVE] } } },
+      where: {
+        status: { not: "PENDING_INTAKE" },
+        subscriptions: { none: { status: { in: [...LIVE] } } },
       },
+      include: { dealer: true },
       orderBy: { id: "asc" },
     }),
     db.plan.findMany({ orderBy: { basePrice: "asc" } }),
@@ -27,10 +29,6 @@ export default async function MarketplacePage() {
       ? db.driver.findUnique({ where: { id: session.driverId } })
       : Promise.resolve(null),
   ]);
-
-  const bookable = vehicles.filter(
-    (v) => v.status !== "PENDING_INTAKE" && v.subscriptions.length === 0,
-  );
 
   const planOptions = plans.map((p) => ({
     id: p.id,
@@ -122,7 +120,7 @@ export default async function MarketplacePage() {
                         {v.year} {v.make} {v.model}
                       </div>
                       <div className="mt-0.5 font-mono text-[0.7rem] text-muted">
-                        {v.id} · VIN {v.vin} · {v.odometer.toLocaleString()} mi
+                        {v.id} · VIN {v.vin} · {Number(v.odometer)} mi
                       </div>
                     </td>
                     <td className="px-4 py-3.5 text-mid">

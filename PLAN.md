@@ -1,4 +1,4 @@
-<!-- Ordered implementation plan for Part 1 marketplace then Part 2 telemetry. -->
+
 
 # Implementation plan
 
@@ -26,6 +26,8 @@ npm run dev     # Next.js on :3000
 - `npm run setup` script chaining install → db → migrate → seed → ingest
 - App shell: `/` driver marketplace, `/ops` fleet, `/ops/disputes` (Part 2)
 
+
+
 ## Phase 1 — Schema (marketplace)
 
 Prisma models: Dealer, Plan, Vehicle, Driver, Subscription, DomainEvent, LedgerEntry, DataConflict.
@@ -50,6 +52,8 @@ Also: subscription status enum includes `CONFLICTING` for quarantined seed rows.
   - odometer impossibilities (e.g. sub startOdometer > vehicle.odometer) → flag
 - Every conflict visible on `/ops/conflicts`
 
+
+
 ## Phase 3 — Marketplace + ops UI (Part 1)
 
 - Driver: list bookable vehicles (no live commitment, not `PENDING_INTAKE`), plan picker, commit
@@ -57,6 +61,8 @@ Also: subscription status enum includes `CONFLICTING` for quarantined seed rows.
 - Ops: fleet table (vehicle, derived state, live sub, conflict badges)
 - Mid-flight: early end on a live sub → ledger entries with explanations
 - Concurrent commit demo script: `npm run test:invariant`
+
+
 
 ## Phase 4 — Telemetry schema + ingest (Part 2)
 
@@ -68,6 +74,8 @@ Models: Device, DeviceVehicleAssignment, TelemetryRaw, Trip, MileageDecision.
 - `/ops/disputes?imei=&period=` — the morning email screen
 - Tests: one per failure mode in `DECISIONS.md`
 
+
+
 ## Phase 5 — Docs finish
 
 - `TELEMETRY_MEMO.md` (after living with the feed)
@@ -75,16 +83,3 @@ Models: Device, DeviceVehicleAssignment, TelemetryRaw, Trip, MileageDecision.
 - Video outline (not the video itself)
 - README: two commands + OS
 
-## Out of order on purpose
-
-Do **not** start with a polished design system or auth. Empty-screen risk is higher than aesthetic risk. Seed and ingest before styling polish.
-
-## Done when
-
-- [x] Clean machine: migrate + seed + ingest/assemble + `npm run dev` → clickable data on every screen
-- [x] Concurrent commit: one winner, one sensible 409 (two Chrome profiles)
-- [x] Early end shows defendable ledger rows
-- [x] Ops shows what we decided about bad seed rows (`/ops/conflicts`)
-- [x] Dispute screen explains a dirty trip without inventing miles (`/ops/disputes`)
-- [x] Tests cover each telemetry failure mode we claim (`npm test`)
-- [x] `TELEMETRY_MEMO.md` written from the feed

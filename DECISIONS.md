@@ -224,61 +224,68 @@ Failure modes the schema/tests must survive (from the file, not invented):
 
 ### Fork C — Mid-flight: early end vs plan change vs car swap
 
-- **Picked:** early end (see above). Driver-facing management lives on **My cars** with an explicit end-date picker; Ops keeps fleet-wide early-end buttons for the pilot.
-- **Rejected for primary build:** plan change (data already hints at it); car swap.
-- **Cost of not building plan change UX:** miss a nice ledger story — mitigated by still recording plan-change-shaped ledger types and surfacing seed's `sub-009` history in ops.
-- **Cost of not building swap:** no dual-vehicle handover UX — acceptable for pilot scope; swap is a day-two feature that reuses the same invariant.
+- **Picked:** early end (see above). Driver manages it on **My cars**; Ops can still end from the fleet board.
+- **Rejected for primary build:** plan change; car swap.
+- **Appeal of rejected:** plan change is already in the seed (`plan_changed`) and makes a clean “what’s owed” ledger story. Swap is the most physical mid-flight move — two cars, two odometer handovers — and feels closest to the product.
+- **Why not now:** early end hits the live-commitment boundary hardest (when does the slot free?). Plan-change ledger types still exist for seed history; swap is day-two and reuses the same invariant.
 
 ### Fork C2 — Where does a driver early-end?
 
-- **Picked:** **My cars** as the primary place (own commitments + date picker + ledger on the same card). Ops stays the full-fleet / conflict console (seed rows included on purpose).
-- **Rejected:** force the demo driver to scroll Ops past every seed subscription to find their car.
-- **Why Ops still lists everyone:** the brief wants fleet truth + “what we decided about bad seed”; that is not a personal cart.
+- **Picked:** **My cars** (own commitments + date picker + ledger on one card).
+- **Rejected:** make the driver find their car inside full Ops fleet.
+- **Appeal of rejected:** one ops console for everything — fewer screens for a pilot.
+- **Why not:** fleet truth and seed conflicts are not a personal cart. Ops still lists everyone on purpose.
 
 ### Fork D — Seed dual-ACTIVE: pick winner vs refuse to load vs keep both live
 
-- **Picked:** load both; quarantine loser as `CONFLICTING`; winner = earlier `startDate` (`sub-004`); ops banner explains it.
-- **Rejected:** fail seed load (blocks "no empty screens"); or keep both ACTIVE (breaks the invariant we're proving).
-- **Cost of picked:** marketplace and DB invariant disagree with literal seed statuses until you read conflict rows — that's the point of the ops screen.
+- **Picked:** load both; quarantine loser as `CONFLICTING`; winner = earlier `startDate` (`sub-004`); ops explains it.
+- **Rejected:** fail the seed load; or keep both ACTIVE.
+- **Appeal of rejected:** fail-load feels clean — never ship dirty data. Keep-both feels honest — “seed as-is” with no edits.
+- **Why not:** empty screens fail the demo; two ACTIVE rows break the invariant we’re proving. Quarantine keeps the contradiction visible without lying in the lock.
 
 ### Fork E — Invoice miles: always odometer delta vs always vendor `tripDistance`
 
-- **Picked:** prefer odometer delta when start/end present, monotonic, and assignment-stable; else `tripDistance`; never average; always write provenance.
+- **Picked:** prefer odometer when start/end present, monotonic, and assignment-stable; else `tripDistance`; never average; always write why.
 - **Rejected:** average the two; or always trust odometer.
-- **Cost of always-odometer:** `TX-480041` and post-`vinChange` cliffs bill nonsense.
-- **Cost of always-distance:** systematic ~1 mi under-read vs odo on clean trips; still better than negative miles — but we can do better with a rule, not a blend.
+- **Appeal of rejected:** averaging gives ops one simple miles number for the email. Always-odometer matches “read the dash” intuition.
+- **Why not:** `TX-480041` and post-`vinChange` cliffs make blind odo nonsense. Averaging hides the fight between sources — that’s how you lose a dispute. A rule + provenance is boring and defendable.
 
 ### Fork F — Feed VINs vs seed VINs
 
-Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`. Options: fabricate joins, or treat telemetry as a parallel pilot dataset.
+Feed VINs (`1HGCV1F…`, `JM1BPB…`, etc.) **do not appear** in `seed.json`.
 
-- **Picked:** parallel dataset. Part 2 ops screen is driven by ingested devices/trips; optional manual link table later. Memo will say so.
-- **Rejected:** fuzzy-match or rewrite seed VINs.
-- **Cost:** no single-pane "this subscriber's overage from the dongle" without a link step — honest to the files we were given.
+- **Picked:** parallel dataset. Part 2 is devices/trips from the feed; link table later if product confirms identity.
+- **Rejected:** fuzzy-match or rewrite seed VINs so marketplace and dongle look like one fleet.
+- **Appeal of rejected:** one pane — “this driver’s overage came from that dongle.” Demo feels more complete.
+- **Why not:** we’d invent a join the files don’t support. Honest to the data we were given; memo says so.
 
 ### Fork G — Header: Driver/Operator vs Part 1/Part 2
 
 - **Picked:** Part 1 (Marketplace) vs Part 2 (Telemetry) — matches how the brief is graded and how tables are separated.
-- **Rejected (after trying):** Driver vs Operator audiences in the header (blurred Disputes into “ops” with Fleet).
-- **Cost of picked:** Part 1 still mixes driver screens and fleet ops in one mode; clarified with tab labels.
+- **Rejected (after trying):** Driver vs Operator in the header.
+- **Appeal of rejected:** matches real roles — drivers book cars, ops defends miles. Feels like a product, not an assignment outline.
+- **Why not:** Disputes got blurred into “ops” next to Fleet, and Part 2 is a different dataset. Part 1/Part 2 is clearer for graders; tabs still separate driver vs fleet inside Part 1.
 
 ### Fork H — Driving health: fuel-only vs composite
 
-- **Picked:** composite of fuel mi/gal + `averageDriveSpeed` + hard brake/accel + idle% (`totalIdlingTime`/`tripTime`) + `dataHealth` (`lib/driving-health.ts`); show the calculation on the trip card. Miles/disputes stay primary; idle is the efficiency adjunct. Documented in `HOW-I-BUILT-IT.md`.
-- **Rejected:** fuel-only efficiency badge (too narrow for the “how they drive” story); LLM-invented scores.
-- **Cost:** thresholds are demo heuristics — not underwriting. Explicitly labeled as such.
+- **Picked:** composite of fuel mi/gal + `averageDriveSpeed` + hard brake/accel + idle% + `dataHealth` (`lib/driving-health.ts`); show the math on the trip card. Miles/disputes stay primary.
+- **Rejected:** fuel-only badge; LLM-invented scores.
+- **Appeal of rejected:** fuel-only is simple and easy to explain. An LLM score sounds “smart” in a demo.
+- **Why not:** fuel alone is too narrow for “how they drive.” Invented scores aren’t underwriting. Thresholds here are demo heuristics — labeled as such.
 
 ### Fork I — COMPLETE badge color vs flags
 
-- **Picked:** green when COMPLETE and unflagged; **red when flagged** even if status text is still COMPLETE (e.g. `duplicate_trip_end` on TX-480005).
-- **Rejected:** always green for COMPLETE (hides dirty assembly).
-- **Cost:** looks like a bug until you read flags — intentional “look closer” signal.
+- **Picked:** green when COMPLETE and unflagged; **red when flagged** even if status still says COMPLETE (e.g. `duplicate_trip_end` on TX-480005).
+- **Rejected:** always green for COMPLETE.
+- **Appeal of rejected:** status text and color agree — less “is this a bug?” in the UI.
+- **Why not:** green COMPLETE hides dirty assembly. Red + flags is a “look closer” signal on purpose.
 
 ### Fork J — Handwriting / insurance / scans
 
-- **Picked:** Manual mileage confirm persisted (`manual_mileage_confirms`); multi policy insurance + optional named driver as local placeholders; vehicle scanning on Signals as placeholder.
-- **Rejected:** full document vault / camera pipeline / real insurer API.
-- **Why:** addresses the brief’s “only evidence was handwriting” with a logged confirm, without overbuilding Part 2.
+- **Picked:** Manual mileage confirm persisted; insurance + named driver as local placeholders; vehicle scanning on Signals as placeholder.
+- **Rejected:** full document vault / cameras / real insurer API.
+- **Appeal of rejected:** feels production-ready; matches the insurance and damage stories in the memo.
+- **Why not:** the brief’s pain is “only evidence was handwriting.” A logged confirm attacks that now. Cams and insurer APIs are year-later spend (see memo).
 
 ---
 

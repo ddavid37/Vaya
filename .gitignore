@@ -8,3 +8,4 @@ fe/.next/
 *.tsbuildinfo
 .vercel
 .env*
+.DS_Store

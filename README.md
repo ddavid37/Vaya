@@ -6,19 +6,27 @@ Car subscription marketplace (Part 1) + telemetry (Part 2).
 
 **Built on:** macOS (Darwin).
 
-**Live deployment:** [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app)
+**Live deployment (recommended):** [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app)
 
-## Run — one command for both parts
+**Please test via the live link**, not a local clone, unless you specifically need to. The deployed app already has Google OAuth and other secrets configured. Running locally means you must create your own Google OAuth client and `.env` secrets — unnecessary for reviewing the demo.
 
-Part 1 (Marketplace) and Part 2 (Telemetry) are the **same app**. You do **not** need two start commands.
+On the live site, use the header **Part 1** / **Part 2** buttons to switch modes.
+
+## Deliverables
+
+- [DECISIONS.md](./DECISIONS.md) — architecture, forks, invariant
+- [HOW-I-BUILT-IT.md](./HOW-I-BUILT-IT.md) — process, AI use, demo path
+- [TELEMETRY_MEMO.md](./TELEMETRY_MEMO.md) — Part 2 memo (buy / refuse / cost)
+
+## Run locally (optional)
+
+Part 1 and Part 2 are the **same app** — one command, then switch with the header **Part 1** / **Part 2** buttons:
 
 ```bash
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) and use the header **Part 1** / **Part 2** buttons to switch modes in the UI (tabs change with the part).
-
-Same on the live site: [https://vaya-swart.vercel.app](https://vaya-swart.vercel.app) → click **Part 1** / **Part 2**.
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Workflow
 
@@ -37,10 +45,18 @@ Next.js (App Router), TypeScript, Prisma, Supabase Postgres, Auth.js (Google).
 - `be/data/seed.json` — marketplace seed/reference data
 - `be/data/feed.jsonl` — append-only telemetry stream
 
-## Setup (first time)
+## Setup — local only (skip if using the live link)
 
-1. Create `.env` at the repo root. Set `DATABASE_URL`, `AUTH_SECRET`, Google OAuth vars, and optionally `OPENAI_API_KEY` for Disputes ★ AI summaries.
-2. Install, migrate, load data, then the one run command:
+Only needed if you run on your machine. You will need your own Google OAuth credentials (and DB URL); the live deployment already has these set so reviewers do not need them.
+
+1. **`.env` at repo root** with:
+   - `DATABASE_URL` — Postgres connection string  
+   - `AUTH_SECRET` — e.g. `openssl rand -base64 32`  
+   - `AUTH_URL=http://localhost:3000`  
+   - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — [Google Cloud Console](https://console.cloud.google.com/) → Credentials → OAuth client (Web), redirect URI: `http://localhost:3000/api/auth/callback/google`  
+   - `OPENAI_API_KEY` — optional (★ AI / chat)
+
+2. **Install, load data, run:**
 
 ```bash
 npm install
@@ -51,27 +67,9 @@ npm run db:assemble
 npm run dev
 ```
 
-After that, day-to-day is only `npm run dev`.
+After that: `npm run dev` only. Tests: `npm test`.
 
-`db:seed` loads `be/data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
-
-`db:ingest` / `db:assemble` load the feed into telemetry tables (destructive to telemetry only).
-
-```bash
-npm test
-```
-
-### Google OAuth (Marketplace sign-in)
-
-1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Credentials** → Create **OAuth client ID** (Web application).
-2. Authorized redirect URIs (add **both**):
-   - `http://localhost:3000/api/auth/callback/google`
-   - `https://vaya-swart.vercel.app/api/auth/callback/google`
-3. Put Client ID / Secret in `.env` as `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
-4. Local: `AUTH_SECRET` (`openssl rand -base64 32`) and `AUTH_URL=http://localhost:3000`.  
-   Production (Vercel): `AUTH_URL=https://vaya-swart.vercel.app`.
-
-**Invariant demo:** two Chrome profiles, each signed in with a different Gmail, Commit the same car → one win, one clear 409. Details in `DECISIONS.md` / `HOW-I-BUILT-IT.md`.
+**Invariant demo:** two Chrome profiles, two Gmails, Commit the same car → one wins, other gets 409. See `DECISIONS.md` / `HOW-I-BUILT-IT.md`.
 
 ## App
 
@@ -85,25 +83,26 @@ npm test
 - `/ops/disputes` — Mileage review (trips, driver unknown, manual confirm, scan/insurance placeholders, ★ AI)
 - `/ops/signals` — driving signals (avg speed, maxSpeed, hard accel/brake from tripMetrics)
 
-## Layout
+## Repo structure
 
 ```
-fe/                UI (Next.js app dir)
-  app/             pages + API routes
-  components/      CommitForm, AuthButtons, …
-  public/          static assets
-
-be/                server / domain
-  auth.ts          Auth.js (Google → Driver)
-  lib/             db, subscriptions, mileage, …
-  prisma/          schema + migrations
-  scripts/         seed, ingest, assemble
-  tests/           telemetry failure-mode tests
-  data/            seed.json, feed.jsonl
-
-DECISIONS.md       architecture + forks
-HOW-I-BUILT-IT.md  process / AI use
-TELEMETRY_MEMO.md  Part 2 memo
-DB.md              DB change log
-README.md          setup
+Vaya/
+├── fe/                      # UI (Next.js)
+│   ├── app/                 # pages + API routes
+│   ├── components/
+│   ├── assets/              # logo, hero image
+│   └── public/
+├── be/                      # server / domain
+│   ├── auth.ts              # Google → Driver
+│   ├── lib/                 # db, subscriptions, mileage, …
+│   ├── prisma/              # schema + migrations
+│   ├── scripts/             # seed, ingest, assemble
+│   ├── tests/
+│   └── data/                # seed.json, feed.jsonl
+├── DECISIONS.md             # architecture + forks
+├── HOW-I-BUILT-IT.md
+├── TELEMETRY_MEMO.md
+├── DB.md
+├── README.md
+└── package.json             # one install / one `npm run dev`
 ```

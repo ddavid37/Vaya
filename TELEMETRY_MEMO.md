@@ -118,15 +118,15 @@ That is cheap, immediate, and likely eliminates most mileage-limit disputes (“
 ## 6. Things I refuse to build
 
 **Refuse (data integrity)**
-- Averaging odometer and `tripDistance` into one “smart miles” number — they disagree; blending invents a third. Pick one per trip, or bill nothing.
 
-**Refuse (integrity + privacy)**
+- Creating new data - only place holders if needed.
 - Geofence / “outside plan for weeks” from sparse `tripData` — crumbs are not continuous presence (fake certainty + overclaims location)
 - Inventing trips from GPS crumbs — not real trips; expands location without clear notice (NJ / US)
-
-Store GPS crumbs raw. Do not productize them.
+- Continous GPS tracking to preserve drivers privacy
 
 ---
+
+
 
 ## Traceability (short)
 

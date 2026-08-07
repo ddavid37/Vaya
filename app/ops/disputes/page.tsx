@@ -38,7 +38,20 @@ export default async function DisputesPage({
   searchParams: Promise<{ imei?: string; from?: string; to?: string }>;
 }) {
   const sp = await searchParams;
-  const devices = await db.device.findMany({ orderBy: { imei: "asc" } });
+  const devices = await db.device.findMany({
+    orderBy: { imei: "asc" },
+    include: { _count: { select: { assignments: true } } },
+  });
+  // Multiple assignments ⇒ device moved (vinChange in feed) — call out in the picker.
+  const movedImeis = new Set(
+    devices.filter((d) => d._count.assignments > 1).map((d) => d.imei),
+  );
+  const dupEndTrips = await db.trip.findMany({
+    where: { flags: { has: "duplicate_trip_end" } },
+    select: { imei: true },
+    distinct: ["imei"],
+  });
+  const dupEndImeis = new Set(dupEndTrips.map((t) => t.imei));
   const imei = sp.imei ?? devices[0]?.imei ?? "";
   const from = sp.from ? new Date(sp.from) : null;
   const to = sp.to ? new Date(sp.to) : null;
@@ -162,12 +175,46 @@ export default async function DisputesPage({
             defaultValue={imei}
             className="min-w-[26rem] border border-rule-s bg-white px-2 py-1.5 font-mono text-sm outline-none focus:border-orange"
           >
-            {devices.map((d) => (
-              <option key={d.imei} value={d.imei}>
-                …{d.imei.slice(-3)} ({d.imei})
-              </option>
-            ))}
+            {devices.map((d) => {
+              const moved = movedImeis.has(d.imei);
+              const dupEnd = dupEndImeis.has(d.imei);
+              const marks = [
+                moved ? "●" : null,
+                dupEnd ? "◆" : null,
+              ]
+                .filter(Boolean)
+                .join("");
+              const tags = [
+                moved ? "vinChange" : null,
+                dupEnd ? "duplicate_trip_end" : null,
+              ]
+                .filter(Boolean)
+                .join(", ");
+              return (
+                <option key={d.imei} value={d.imei}>
+                  {marks ? `${marks} ` : ""}…{d.imei.slice(-3)} ({d.imei})
+                  {tags ? ` — ${tags}` : ""}
+                </option>
+              );
+            })}
           </select>
+          {movedImeis.size > 0 || dupEndImeis.size > 0 ? (
+            <span className="font-mono text-[0.6rem] tracking-[0.06em] text-mid">
+              {movedImeis.size > 0 ? (
+                <>
+                  ● = device moved (
+                  <span className="text-orange">vinChange</span>)
+                </>
+              ) : null}
+              {movedImeis.size > 0 && dupEndImeis.size > 0 ? " · " : null}
+              {dupEndImeis.size > 0 ? (
+                <>
+                  ◆ ={" "}
+                  <span className="text-orange">duplicate_trip_end</span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="font-mono text-[0.6rem] tracking-[0.12em] text-mid uppercase">

@@ -1,5 +1,3 @@
-
-
 # Telemetry memo
 
 Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Sources: `data/feed.jsonl`, `data/seed.json` (NJ dealers), public pricing writeups in §2. **Guess** = not confirmed on a primary vendor quote.
@@ -11,27 +9,31 @@ Fifteen cars leave the lot for months. Three costs today: **(B) billing** overag
 From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not cameras).
 
 **Currently possible**
+
 - Trip start/end with odometer (when present) and fuel
 - Second distance + behavior: `tripDistance`, hard brake/accel, idle, avg/max speed
 - Period miles with provenance (pick odo **or** `tripDistance` per trip — never blend)
-- Device≠vehicle handling via `vinChange` / assignment windows
-- Catch-up after gaps (REST `trip`, delayed `tripMetrics`, connect/disconnect)
-- Store sparse GPS crumbs and MIL/battery as raw events
+- Device≠vehicle handling via `vinChange` event from the given data
+- Catch-up after gaps (REST `trip`, delayed `tripMetrics`)
+- pickup/return (if there is) location - recorded manualy by the represenative.
 
 **Currently not possible**
+
 - Who was driving
-- When damage happened
-- Continuous location / “sat outside plan area for weeks”
-- One blended “true miles” number (odo and `tripDistance` disagree)
-- Guaranteed device↔VIN without assignment discipline
-- Linking feed cars to Part 1 seed subscriptions (0 VIN overlap)
+- chagne in car condition (comparing the car scanning at the beginning vs return)
+- When damage happened during the holding period
+- Continuous location / “sat outside plan area for weeks” (no active GPS tracking)
+- Averaging odometer and trip distance into one miles number (they disagree)
+- Treating feed cars as the same cars as the marketplace seed (VINs don’t match)
 
 ---
+
+
 
 ## 2. Cost it — 15 cars, first year
 
 **Stack:** one gateway/car + platform for B+C+E, **no cameras**. Feed vendor unnamed → budget model, not a signed quote.  
-  
+
 These 
 
 
@@ -115,6 +117,8 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
 
 ---
+
+
 
 ## Traceability (short)
 

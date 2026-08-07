@@ -28,6 +28,8 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ---
 
+
+
 ## 2. Cost it — 15 cars, first year
 
 One dongle per car + software that sends trip data like our feed. **No cameras**. **All numbers below are assumed** for now.
@@ -51,6 +53,8 @@ One dongle per car + software that sends trip data like our feed. **No cameras**
 Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ---
+
+
 
 ## 3. What is worth paying for
 
@@ -78,29 +82,34 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
+
+
 ## 4. Decision
 
 **Buy now:** the middle stack from §2/§3 for the 15-car pilot (dongle + trip API — no scanners, no continuous fancy GPS).
 
 **Attack now — billing**
-- Replace “a number somebody typed” with trip miles + clear source per trip
-- Same overage math as today (`overagePerMile` × miles over allowance) — better evidence, not a new silent fee
+
+- Replace “a number somebody typed” with trip miles + clear source per trip (immidiate - not require special resources.
+- Same overage math as today (`overagePerMile` × miles over allowance) - to better confirm that charge. 
 
 **Leave alone for now**
-- **Insurance** — keep hard-event exports; don’t claim a lower fleet rate or buy cams/scores for underwriting
-- **Ops blind spots** — who drove, damage timing, outside plan area (§1)
 
-**Lawfulness (NJ / US)**
-- Same charge rules; telematics is evidence — counsel must put mileage/device notice in the subscriber agreement before go-live (no T&Cs on file to cite)
+- **Insurance** - keep hard-event exports; don’t claim a lower fleet rate or buy cams/scores for underwriting
+- **Ops blind spots** - who drove, damage timing, outside plan area.
 
 **Optional later (not year-1)**
+
 - Body scanners (e.g. UVeye) — driver burden + high cost before we can use damage timing in ops
 - Continuous GPS — may help safety/geofence later; sparse crumbs are not the same value, and always-on tracking hurts privacy
 
-**Still true (doesn’t change the buy)**
+**True But not Relevant (doesn’t change the buy)**
+
 - Feed VINs don’t match marketplace seed cars — we don’t invent that link (assignment / demo data)
 
 ---
+
+
 
 ## 5. Prove before spending — close in a day (feed desk only)
 
@@ -117,6 +126,8 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 
 ---
 
+
+
 ## 6. Things I refuse to build
 
 **Primary refuse — data integrity:** averaging odometer delta with `tripDistance` into one “smart miles” number. The feed gives two disagreeing estimates; blending invents a third. Pick one source per trip, record the discard — or bill nothing.
@@ -129,6 +140,8 @@ That settles “is the data shape worth buying mid-tier for?” in a day. Price 
 Why these: each looks useful on a slide and fails the first dispute — or overclaims location in a way we cannot defend.
 
 ---
+
+
 
 ## Traceability (short)
 

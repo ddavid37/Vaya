@@ -78,9 +78,9 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ---
 
-## 4. Decition
+## 4. Decision
 
-**I would buy for the 15-car pilot now the middle stack from the previous sections** (dongle + trip API, no cams/scanners).
+I would buy for the 15-car pilot now the middle stack as described from the previous sections (dongle + trip API, no scanners/continues fancy GPS tracker).
 
 **Attack now — billing**
 
@@ -90,6 +90,12 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 **Leave alone for now**
 
 - **Ops blind spots** — who drove, damage timing, outside plan area (section 1)
+
+**Optional for the future**
+
+ongoing scanners - burden for the drivers and exaduarted cost
+
+Continues GPS tracker -  GPS sampling (scumbs) can provide simmilar value without harminng the drivers privacy (while can be beneficial for safety mechanisem during emergency though).
 
 **Still true (doesn’t change the buy)**
 

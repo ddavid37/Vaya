@@ -123,7 +123,7 @@ function quarantinePlan(seed: Seed) {
 
 async function main() {
   const seed = JSON.parse(
-    readFileSync(resolve(process.cwd(), "data/seed.json"), "utf8"),
+    readFileSync(resolve(process.cwd(), "be/data/seed.json"), "utf8"),
   ) as Seed;
   const { statusOverride, dualConflicts } = quarantinePlan(seed);
 

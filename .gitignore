@@ -3,6 +3,7 @@
 /feed.jsonl
 node_modules/
 .next/
+fe/.next/
 .env
 *.tsbuildinfo
 .vercel

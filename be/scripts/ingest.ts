@@ -1,4 +1,4 @@
-// Ingest data/feed.jsonl into telemetry_raw (idempotent) and apply IMEI↔VIN assignment side effects.
+// Ingest be/data/feed.jsonl into telemetry_raw (idempotent) and apply IMEI↔VIN assignment side effects.
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -134,7 +134,7 @@ async function applySideEffects(line: FeedLine, naturalKey: string) {
 }
 
 async function main() {
-  const path = resolve(process.cwd(), "data/feed.jsonl");
+  const path = resolve(process.cwd(), "be/data/feed.jsonl");
   const lines = readFileSync(path, "utf8")
     .split("\n")
     .map((l) => l.trim())

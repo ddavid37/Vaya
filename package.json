@@ -3,17 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "prisma generate && next build --turbopack",
+    "dev": "next dev --turbopack fe",
+    "build": "prisma generate && next build --turbopack fe",
     "postinstall": "prisma generate",
-    "start": "next start",
-    "lint": "eslint",
-    "db:seed": "tsx scripts/seed.ts",
-    "db:ingest": "tsx scripts/ingest.ts",
-    "db:assemble": "tsx scripts/assemble.ts",
-    "test": "tsx --test tests/**/*.test.ts",
-    "test:telemetry": "tsx --test tests/telemetry.test.ts",
-    "check:secrets": "bash scripts/check-secrets.sh"
+    "start": "next start fe",
+    "lint": "eslint fe be",
+    "db:seed": "tsx be/scripts/seed.ts",
+    "db:ingest": "tsx be/scripts/ingest.ts",
+    "db:assemble": "tsx be/scripts/assemble.ts",
+    "test": "tsx --test be/tests/**/*.test.ts",
+    "test:telemetry": "tsx --test be/tests/telemetry.test.ts",
+    "check:secrets": "bash be/scripts/check-secrets.sh"
+  },
+  "prisma": {
+    "schema": "be/prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

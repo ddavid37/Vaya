@@ -16,12 +16,12 @@ Next.js (App Router), TypeScript, Prisma, Supabase Postgres, Auth.js (Google).
 
 ## Data
 
-- `data/seed.json` — marketplace seed/reference data
-- `data/feed.jsonl` — append-only telemetry stream
+- `be/data/seed.json` — marketplace seed/reference data
+- `be/data/feed.jsonl` — append-only telemetry stream
 
 ## Setup
 
-1. Copy `.env.example` → `.env` (or create `.env`). Set `DATABASE_URL`, `AUTH_SECRET`, Google OAuth vars, and optionally `OPENAI_API_KEY` for Disputes ★ AI summaries.
+1. Create `.env` at the repo root. Set `DATABASE_URL`, `AUTH_SECRET`, Google OAuth vars, and optionally `OPENAI_API_KEY` for Disputes ★ AI summaries.
 2. Install, migrate, run:
 
 ```bash
@@ -31,9 +31,9 @@ npm run db:seed
 npm run dev
 ```
 
-`db:seed` loads `data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
+`db:seed` loads `be/data/seed.json` as-is and quarantines dual-live rows (e.g. `sub-026` → `CONFLICTING`).
 
-`db:ingest` loads `data/feed.jsonl` into telemetry tables (raw + device assignments). Destructive to telemetry only.
+`db:ingest` loads `be/data/feed.jsonl` into telemetry tables (raw + device assignments). Destructive to telemetry only.
 
 `db:assemble` builds trips + mileage decisions from raw events.
 
@@ -69,14 +69,22 @@ One header part at a time (toggle **Part 1** ↔ **Part 2** next to Sign in/out)
 ## Layout
 
 ```
-app/           routes + API
-auth.ts        Auth.js (Google → Driver)
-components/    CommitForm, AuthButtons, …
-lib/           db client, subscription + mileage domain
-prisma/        schema + migrations
-scripts/       seed, ingest, assemble
-tests/         telemetry failure-mode tests
-data/          assignment fixtures
-DB.md          log of every DB manipulation
+fe/                UI (Next.js app dir)
+  app/             pages + API routes
+  components/      CommitForm, AuthButtons, …
+  public/          static assets
+
+be/                server / domain
+  auth.ts          Auth.js (Google → Driver)
+  lib/             db, subscriptions, mileage, …
+  prisma/          schema + migrations
+  scripts/         seed, ingest, assemble
+  tests/           telemetry failure-mode tests
+  data/            seed.json, feed.jsonl
+
+DECISIONS.md       architecture + forks
+HOW-I-BUILT-IT.md  process / AI use
 TELEMETRY_MEMO.md  Part 2 memo
+DB.md              DB change log
+README.md          setup
 ```

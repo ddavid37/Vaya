@@ -53,9 +53,14 @@ Build a clean, simple MVP. Prioritize correctness, clarity, and engineering judg
 - Python
 
 ## Data
-- `data/seed.json` — Part 1 seed/reference data (load as-is).
-- `data/feed.jsonl` — Part 2 append-only telemetry stream.
+- `be/data/seed.json` — Part 1 seed/reference data (load as-is).
+- `be/data/feed.jsonl` — Part 2 append-only telemetry stream.
 - Never design the schema around the JSON structure.
+
+## Repo layout
+- `fe/` — UI (Next `app/`, `components/`, `public/`)
+- `be/` — domain + data access (`lib/`, `prisma/`, `scripts/`, `auth.ts`, `data/`, `tests/`)
+- Root — deliverables (`DECISIONS.md`, `HOW-I-BUILT-IT.md`, `TELEMETRY_MEMO.md`), `README`, `DB.md`, config
 
 ## Code Style
 - Prefer composition over inheritance.

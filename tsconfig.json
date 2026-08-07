@@ -13,15 +13,19 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "paths": {
-      "@/*": ["./*"]
+      "@/auth": ["./be/auth.ts"],
+      "@/lib/*": ["./be/lib/*"],
+      "@/components/*": ["./fe/components/*"],
+      "@/*": ["./fe/*", "./be/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "fe/**/*.ts",
+    "fe/**/*.tsx",
+    "be/**/*.ts",
+    "be/**/*.tsx",
+    "fe/next-env.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

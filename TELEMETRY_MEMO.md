@@ -6,13 +6,13 @@ Fifteen cars leave the lot for months. We barely see them until return. Three co
 - **Insurance** — one fleet rate; we can’t tell careful drivers from careless ones
 - **Ops blind spots** — who drove, when damage happened, car outside plan area
 
-**Sources:** `data/feed.jsonl`, `data/seed.json`.
+**Sources:** `be/data/feed.jsonl`, `be/data/seed.json`.
 
 ---
 
 ## 1. Map what is actually currently possible to record and what is not
 
-From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not cameras).
+From `be/data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not cameras).
 
 **Currently possible**
 

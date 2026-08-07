@@ -19,7 +19,7 @@ Before answering questions in code, I set up the workplace:
 1. Created the GitHub repo
 2. Created the matching local workspace and cloned it
 3. Added fundamental files — `.gitignore`, `README`, imported the assignment PDF and the two data files (`seed.json`, `feed.jsonl`)
-4. Cursor rules doc (`.cursor/rules/vaya.mdc`) so the agent stayed aligned with my intentions, context, and boundaries. And a secrets-scanning script for non-`main` work / PRs (`scripts/check-secrets.sh` + GitHub Action).
+4. Cursor rules doc (`.cursor/rules/vaya.mdc`) so the agent stayed aligned with my intentions, context, and boundaries. And a secrets-scanning script for non-`main` work / PRs (`be/scripts/check-secrets.sh` + GitHub Action).
 5. Prepared for later live deploy (Vercel)
 6. Set up the database on Supabase so I could see schemas and tables visually and potentially control them from there.
 
@@ -55,12 +55,12 @@ Fleet Truth shows seed driver names (e.g. Sam Reyes) next to live commitments fo
 
 **One live commitment (invariant)** — Concurrent commit → one winner, sensible message to the loser (not a 500).
 
-Why Google auth matters here: the critical showcase is **two different real people racing the same car**. A fake “pick driver” dropdown would not look like concurrent demand. So I set up **Auth.js + Google OAuth** (`auth.ts`): first login upserts a `Driver` from the Gmail profile and puts `driverId` on the session JWT. Commit never trusts a client-supplied driver id.
+Why Google auth matters here: the critical showcase is **two different real people racing the same car**. A fake “pick driver” dropdown would not look like concurrent demand. So I set up **Auth.js + Google OAuth** (`be/auth.ts`): first login upserts a `Driver` from the Gmail profile and puts `driverId` on the session JWT. Commit never trusts a client-supplied driver id.
 
 How commit is wired:
 1. UI **Commit** → `POST /api/subscriptions` with `vehicleId` + `planId`  
 2. API reads `session.driverId` (401 if signed out)  
-3. `createSubscription` in `lib/subscriptions.ts` runs a DB transaction: `SELECT … FROM vehicles … FOR UPDATE`, then insert `ACTIVE` subscription  
+3. `createSubscription` in `be/lib/subscriptions.ts` runs a DB transaction: `SELECT … FROM vehicles … FOR UPDATE`, then insert `ACTIVE` subscription  
 4. Postgres **partial unique index** `subscriptions_one_live_per_vehicle` on `vehicle_id` where status ∈ `RESERVED | ACTIVE | ENDING` — that is the real enforcement  
 5. Unique violation (`P2002`) → API **409** `VEHICLE_NOT_AVAILABLE` → UI shows that code next to Commit  
 

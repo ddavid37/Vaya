@@ -17,13 +17,13 @@ If it touches Postgres/Supabase data or schema, it goes here.
 
 **Why:** Enforce one live commitment per vehicle at the database layer (see `DECISIONS.md`).
 
-**Files:** `prisma/schema.prisma`, `prisma/migrations/20260805190000_marketplace_init/migration.sql`.
+**Files:** `be/prisma/schema.prisma`, `be/prisma/migrations/20260805190000_marketplace_init/migration.sql`.
 
 ---
 
 ## 2026-08-05 — Seed load (`npm run db:seed`)
 
-**Action:** Loaded `data/seed.json` into Supabase via `scripts/seed.ts`.
+**Action:** Loaded `be/data/seed.json` into Supabase via `be/scripts/seed.ts`.
 
 **Counts:** 3 dealers, 6 plans, 40 vehicles, 25 drivers, 26 subscriptions, 44 domain events.
 
@@ -91,7 +91,7 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ## 2026-08-06 — Telemetry feed ingest (`npm run db:ingest`)
 
-**Action:** Loaded `data/feed.jsonl` via `scripts/ingest.ts`.
+**Action:** Loaded `be/data/feed.jsonl` via `be/scripts/ingest.ts`.
 
 **What we did:**
 - Truncated telemetry tables only (`mileage_decisions`, `trips`, `telemetry_raw`, `device_vehicle_assignments`, `devices`) — marketplace untouched.
@@ -107,7 +107,7 @@ Source prices/statuses/odometers were **not** rewritten (except the dual-live st
 
 ## 2026-08-06 — Trip assembly + mileage decisions (`npm run db:assemble`)
 
-**Action:** Built `trips` + `mileage_decisions` from `telemetry_raw` via `scripts/assemble.ts`.
+**Action:** Built `trips` + `mileage_decisions` from `telemetry_raw` via `be/scripts/assemble.ts`.
 
 **Rules:**
 - Group by `transactionId` (tripStart/End/Metrics + REST `trip`).

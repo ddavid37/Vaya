@@ -111,7 +111,7 @@ describe("sparse GPS / non-trip events", () => {
   });
 
   it("feed tripData lines never carry a transactionId used for trips", () => {
-    const lines = readFileSync(resolve("data/feed.jsonl"), "utf8")
+    const lines = readFileSync(resolve("be/data/feed.jsonl"), "utf8")
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l) as { event: string; data: { transactionId?: string } });
@@ -126,7 +126,7 @@ describe("sparse GPS / non-trip events", () => {
 
 describe("feed evidence smoke checks", () => {
   it("includes vinChange and TX-480041 impossible odo in the fixture", () => {
-    const lines = readFileSync(resolve("data/feed.jsonl"), "utf8")
+    const lines = readFileSync(resolve("be/data/feed.jsonl"), "utf8")
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l));

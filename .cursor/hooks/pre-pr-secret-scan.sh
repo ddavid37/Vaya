@@ -22,8 +22,8 @@ if [[ ! "$COMMAND" =~ gh[[:space:]]+pr[[:space:]]+create ]] && [[ ! "$COMMAND" =
   exit 0
 fi
 
-if ! bash scripts/check-secrets.sh; then
-  printf '%s\n' '{"permission":"deny","user_message":"Secret scan failed on this branch. Fix leaks (or see scripts/check-secrets.sh) before PR/push."}'
+if ! bash be/scripts/check-secrets.sh; then
+  printf '%s\n' '{"permission":"deny","user_message":"Secret scan failed on this branch. Fix leaks (or see be/scripts/check-secrets.sh) before PR/push."}'
   exit 0
 fi
 

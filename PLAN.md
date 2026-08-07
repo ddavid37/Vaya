@@ -10,7 +10,7 @@ Ordered for a working demo early, then invariant hardness, then telemetry. Archi
 - Docker (Postgres)
 - OS: Linux
 
-Data files: `data/seed.json`, `data/feed.jsonl` (restored from assignment materials; tracked under `data/`).
+Data files: `be/data/seed.json`, `be/data/feed.jsonl` (restored from assignment materials).
 
 ## Target commands (README will match)
 
@@ -68,7 +68,7 @@ Also: subscription status enum includes `CONFLICTING` for quarantined seed rows.
 
 Models: Device, DeviceVehicleAssignment, TelemetryRaw, Trip, MileageDecision.
 
-- Ingest `data/feed.jsonl` idempotently
+- Ingest `be/data/feed.jsonl` idempotently
 - Handle `vinChange`, disconnect/connect, duplicates, out-of-order, REST `trip`
 - Assemble trips; compute mileage decisions with provenance
 - `/ops/disputes?imei=&period=` — the morning email screen
@@ -81,5 +81,5 @@ Models: Device, DeviceVehicleAssignment, TelemetryRaw, Trip, MileageDecision.
 - `TELEMETRY_MEMO.md` (after living with the feed)
 - `HOW-I-BUILT-IT.md` (rules, overrides, throwaways, hand-checks)
 - Video outline (not the video itself)
-- README: two commands + OS
+- README: two commands + OS`
 

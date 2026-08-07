@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Secret leak check for feature branches / before PRs. No-op on main.
 # Usage: npm run check:secrets
-#        ./scripts/check-secrets.sh
-#        FORCE=1 ./scripts/check-secrets.sh   # run even on main (CI / debug)
+#        ./be/scripts/check-secrets.sh
+#        FORCE=1 ./be/scripts/check-secrets.sh   # run even on main (CI / debug)
 
 set -euo pipefail
 

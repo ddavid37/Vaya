@@ -1,10 +1,10 @@
 # Telemetry memo
 
-Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Sources: `data/feed.jsonl`, `data/seed.json` (NJ dealers), public pricing writeups in §2. **Guess** = not confirmed on a primary vendor quote.
+Fifteen cars leave the lot for months. Three costs today: **(B) billing** overage from two handwritten odometer reads; **(I) insurance** one fleet rate because we cannot describe how anyone drives; **(O) ops blind spots** (who drove, when damage, car outside plan area). Sources: `data/feed.jsonl`, `data/seed.json` (NJ dealers). Cost numbers in §2 are **all guesses** for now.
 
 ---
 
-## 1. Map what is actually possible
+## 1. Map what is actually currently possible to record and what is not
 
 From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not cameras).
 
@@ -30,20 +30,21 @@ From `data/feed.jsonl` as it stands (dongle/IMEI stream — not handwriting, not
 
 ## 2. Cost it — 15 cars, first year
 
-One dongle per car + software that sends trip data like our feed. **No cameras.** Not a signed quote — a budget.
+One dongle per car + software that sends trip data like our feed. **No cameras.** Not a signed quote — a budget. **All numbers below are guesses** for now.
 
 **Headline:** ~**$75 / car / month** in year 1 → ~**$13.4k** for 15 cars. Low ~$50 / high ~$110 if SaaS and labor swing.
 
-| Line | $/car/mo year-1 | Confirmed / Guess | Where from |
-| --- | --- | --- | --- |
-| Software (SaaS) | **$32** | **Guess** ($25–40 band) | Industry writeups; vendors usually quote-only |
-| Public list price (anchor only) | $39 | **Confirmed** | Samsara-style gov sheet (LIC-VG-ENT) — not our quote |
-| Dongle hardware | **~$10** ($125÷12) | **Guess** | Typical ~$80–150 once |
-| Install / move at lot | **~$7** | **Guess** | Not on pricing page |
-| Spare dongles (2 for fleet) | **~$1** | **Guess** | Devices move (`vinChange`) |
-| Ops time (gaps, disputes) | **~$7** | **Guess** | ~2 hr/mo @ $50 |
-| Our ingest + dispute tools | **~$17** | **Guess** | ~$250/mo shared ÷ 15 |
-| **Mid total** | **~$75** | Mostly guess | **~$13.4k** fleet year-1 |
+| Line | $/car/mo year-1 |
+| --- | --- |
+| Software (SaaS) | ~$32 |
+| Dongle hardware ($125÷12) | ~$10 |
+| Install / move at lot | ~$7 |
+| Spare dongles (2 for fleet) | ~$1 |
+| Ops time (gaps, disputes) | ~$7 |
+| Our ingest + dispute tools | ~$17 |
+| **Total** | **~$75** |
+
+Fleet year-1 (15 × $75 × 12): **~$13.4k**.
 
 ---
 
@@ -112,8 +113,7 @@ Why these: each looks useful on a slide and fails the first dispute — or overc
 | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Event types, `vinChange`, delay burst, TX-480041, sparse `tripData`, odo vs distance gap | `data/feed.jsonl`                                                                       |
 | Dealers NJ / US                                                                          | `data/seed.json`                                                                        |
-| $39 VG gov list; commercial quote-only; $25–40 band                                      | Public cooperative sheet / 2026 industry pricing writeups — **not** a Vaya vendor quote |
-| $/car mid ~$75 year-1                                                                    | **Mostly Guess** (§2)                                                                   |
+| $/car mid ~$75 year-1                                                                    | **All guesses** (§2) — no vendor quote yet                                              |
 | Subscriber T&Cs                                                                          | **None on file** — not cited                                                            |
 
 

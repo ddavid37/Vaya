@@ -80,26 +80,25 @@ Cheap trackers and full platforms can cost **several times** different per car. 
 
 ## 4. Decision
 
-I would buy for the 15-car pilot now the middle stack as described from the previous sections (dongle + trip API, no scanners/continues fancy GPS tracker).
+**Buy now:** the middle stack from §2/§3 for the 15-car pilot (dongle + trip API — no scanners, no continuous fancy GPS).
 
 **Attack now — billing**
-
-- Replace “a number somebody typed” with trip miles + clear source per trip.
-- Same overage math as today (`overagePerMile` × miles over allowance) — better evidence. 
+- Replace “a number somebody typed” with trip miles + clear source per trip
+- Same overage math as today (`overagePerMile` × miles over allowance) — better evidence, not a new silent fee
 
 **Leave alone for now**
+- **Insurance** — keep hard-event exports; don’t claim a lower fleet rate or buy cams/scores for underwriting
+- **Ops blind spots** — who drove, damage timing, outside plan area (§1)
 
-- **Ops blind spots** — who drove, damage timing, outside plan area (section 1)
+**Lawfulness (NJ / US)**
+- Same charge rules; telematics is evidence — counsel must put mileage/device notice in the subscriber agreement before go-live (no T&Cs on file to cite)
 
-**Optional for the future**
-
-ongoing scanners - burden for the drivers and exaduarted cost
-
-Continues GPS tracker -  GPS sampling (scumbs) can provide simmilar value without harminng the drivers privacy (while can be beneficial for safety mechanisem during emergency though).
+**Optional later (not year-1)**
+- Body scanners (e.g. UVeye) — driver burden + high cost before we can use damage timing in ops
+- Continuous GPS — may help safety/geofence later; sparse crumbs are not the same value, and always-on tracking hurts privacy
 
 **Still true (doesn’t change the buy)**
-
-- Feed VINs don’t match marketplace seed cars - we don’t invent that link - this is a demo data
+- Feed VINs don’t match marketplace seed cars — we don’t invent that link (assignment / demo data)
 
 ---
 

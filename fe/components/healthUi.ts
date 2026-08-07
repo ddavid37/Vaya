@@ -1,30 +1,31 @@
-// Tailwind class maps for driving-health bands (kept under fe/ so the scanner emits them).
+// Driving-health frame + label classes (plain CSS in globals.css — not Tailwind palette scan).
 
 import type { DrivingHealth } from "@/lib/driving-health";
 
-/** Frame / status text classes from driving health. */
+/** Colored card border from driving health. */
 export function healthFrameClass(health: DrivingHealth): string {
   switch (health) {
     case "healthy":
-      return "border-green-400";
+      return "trip-frame-healthy";
     case "fair":
-      return "border-yellow-400";
+      return "trip-frame-fair";
     case "poor":
-      return "border-red-400";
+      return "trip-frame-poor";
     default:
-      return "border-rule";
+      return "trip-frame-unknown";
   }
 }
 
+/** Colored HEALTHY / FAIR / POOR (and status) label. */
 export function healthColor(health: DrivingHealth): string {
   switch (health) {
     case "healthy":
-      return "text-green-700";
+      return "trip-text-healthy";
     case "fair":
-      return "text-yellow-600";
+      return "trip-text-fair";
     case "poor":
-      return "text-red-600";
+      return "trip-text-poor";
     default:
-      return "text-muted";
+      return "trip-text-unknown";
   }
 }

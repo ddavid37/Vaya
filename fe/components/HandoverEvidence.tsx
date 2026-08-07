@@ -234,7 +234,7 @@ export function HandoverEvidence({
                 ) : null}
               </div>
               {p.saved ? (
-                <p className="mt-3 font-mono text-[0.7rem] text-green-700">
+                <p className="mt-3 font-mono text-[0.7rem] trip-text-healthy">
                   Saved locally (demo): {p.carrier || "—"} / {p.policyRef || "—"}
                   {p.forSpecificDriver
                     ? ` · driver ${p.driverName || "unnamed"}`

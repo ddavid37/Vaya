@@ -5,23 +5,22 @@
 import { useState } from "react";
 import { type UsageLevel } from "@/lib/usage-level";
 
-/** Legend + box styles live here so Tailwind under fe/ emits the color utilities. */
 const USAGE_LEGEND: Array<{
   level: UsageLevel;
   label: string;
   circle: string;
 }> = [
-  { level: "green", label: "Healthy overall", circle: "bg-green-600" },
-  { level: "yellow", label: "Fair overall", circle: "bg-yellow-400" },
-  { level: "orange", label: "Poor / caution", circle: "bg-orange-500" },
-  { level: "red", label: "Severe overall", circle: "bg-red-600" },
+  { level: "green", label: "Healthy overall", circle: "usage-dot-green" },
+  { level: "yellow", label: "Fair overall", circle: "usage-dot-yellow" },
+  { level: "orange", label: "Poor / caution", circle: "usage-dot-orange" },
+  { level: "red", label: "Severe overall", circle: "usage-dot-red" },
 ];
 
 const BOX: Record<UsageLevel, string> = {
-  green: "border-green-300 bg-green-50",
-  yellow: "border-yellow-300 bg-yellow-50",
-  orange: "border-orange-300 bg-orange-50",
-  red: "border-red-300 bg-red-50",
+  green: "usage-box-green",
+  yellow: "usage-box-yellow",
+  orange: "usage-box-orange",
+  red: "usage-box-red",
 };
 
 export function AiSummaryButton({

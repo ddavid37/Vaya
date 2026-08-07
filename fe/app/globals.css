@@ -2,9 +2,6 @@
 
 @import "tailwindcss";
 
-/* Domain helpers under be/ return Tailwind class strings — scan them too. */
-@source "../../be/lib";
-
 @theme {
   --color-ink: #1a1510;
   --color-mid: #6b6560;
@@ -19,4 +16,61 @@
 body {
   background: #ffffff;
   color: #1a1510;
+}
+
+/* Mileage review trip frames + driving-health labels (always present; not Tailwind-scanned). */
+.trip-frame-healthy {
+  border-color: #4ade80;
+}
+.trip-frame-fair {
+  border-color: #facc15;
+}
+.trip-frame-poor {
+  border-color: #f87171;
+}
+.trip-frame-unknown {
+  border-color: #e8e4df;
+}
+
+.trip-text-healthy {
+  color: #15803d;
+}
+.trip-text-fair {
+  color: #ca8a04;
+}
+.trip-text-poor {
+  color: #dc2626;
+}
+.trip-text-unknown {
+  color: #9a948e;
+}
+
+/* AI summary usage legend / box */
+.usage-box-green {
+  border-color: #86efac;
+  background-color: #f0fdf4;
+}
+.usage-box-yellow {
+  border-color: #fde047;
+  background-color: #fefce8;
+}
+.usage-box-orange {
+  border-color: #fdba74;
+  background-color: #fff7ed;
+}
+.usage-box-red {
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+.usage-dot-green {
+  background-color: #16a34a;
+}
+.usage-dot-yellow {
+  background-color: #facc15;
+}
+.usage-dot-orange {
+  background-color: #f97316;
+}
+.usage-dot-red {
+  background-color: #dc2626;
 }

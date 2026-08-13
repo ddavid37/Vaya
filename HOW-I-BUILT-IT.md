@@ -1,12 +1,14 @@
 # How I built it
 
-How I actually worked — top to bottom — and how that process taught me what the brief was asking for.
+How I actually worked — top to bottom — and how that process taught me.
+
+
 
 ## 1. Read the brief
 
-I read the assignment document once, top to bottom. Then I analyzed it and started forming answers myself.
+I read the assignment document once, top to bottom. Then I analyzed it and started forming answers myself. Where I was unsure what they wanted, I used ChatGPT to understand the asks better. I still did not understand everything at that point — that was okay. Clarity came later thourout the building.
 
-Where I was unsure what they wanted, I used ChatGPT to understand the asks better. I still did not understand everything at that point — that was okay. Clarity came later thourout the building.
+
 
 ## 2. Set up the environment
 
@@ -40,6 +42,8 @@ Through that, I developed a clearer sense of **what brings value to the platform
 
 Lastly, I added an overall review once any major parts are completed - to verify how they are alihn with each other.
 
+
+
 ## 4. Part 1 questions (in that loop)
 
 **Supply / demand** — Driver must see availability and commit; ops must see fleet truth. Seed as-is; quarantine dual-live rows on Conflicts.  
@@ -64,12 +68,16 @@ How commit is wired:
 **Mid-flight change + what’s owed** — I picked early end (not swap / plan change).  
 → Built My cars with date picker + ledger (ENDING vs end-now prorate). Clicked through until “why was I charged that?” was answerable on one card.
 
+
+
 ## 5. Part 2 questions (same loop)
 
 **What is the feed for?** Ops understanding miles / disputes — not another marketplace. Device ≠ vehicle; parallel dataset (feed VINs don’t match seed).  
 → Ingest raw → assemble trips / assignments → mileage decisions → review UI.
 
 Each pass on Review showed what was missing (flags, idle, health as a demo heuristic, assignment history). I threw away an early FK into marketplace vehicles. Hand-checked `vinChange`, TX-480041, raw-only `tripData`. Memo: `TELEMETRY_MEMO.md`. Tests: `npm test`.
+
+
 
 ## Technical steps (what actually landed in the stack)
 
@@ -87,8 +95,6 @@ Rough build order after the repo existed:
 
 I kept using the running app after each step so the next technical piece was driven by what the screen still couldn’t explain.
 
----
-
 
 
 ## What that process bought me
@@ -98,11 +104,9 @@ I kept using the running app after each step so the next technical piece was dri
 - Clearer read of the assignment description over time  
 - A demo path that proves the invariant with two authenticated accounts, not only a UI label
 
----
 
 
-
-## AI use
+## AI Use
 
 
 
@@ -138,6 +142,8 @@ I mostly worked directly on `main`, so the PR Action ran rarely; the script/hook
 
 Ultimetly the ongoing loop was Cursor agent + rules + running UI + me.
 
+
+
 ## 2. Where it was wrong
 
 - **Inventing a marketplace telemetry join:** Early Part 2, the agent wanted trips (or vehicles) linked to seed marketplace cars — a foreign key or fuzzy VIN match — so “one fleet” would show in the UI. 
@@ -152,48 +158,38 @@ Ultimetly the ongoing loop was Cursor agent + rules + running UI + me.
 ## 3. What you threw away
 
 
-| Thrown away                                 | Why                                                                                                                                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FK / single-fleet link feed → seed vehicles | Invented join; VINs don’t match between the different datasets.                                                                                                               |
-| Web-app view as Driver vs Operator          | Mileage review (Part 2) sat next to Fleet/Conflicts like just another ops page so it was confused and inefficient for reviewing. Replaced it to Part 1 / Part 2 views toggle. |
+| Thrown away                                                         | Why                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FK / single-fleet link feed → seed vehicles                         | Invented join; VINs don’t match between the different datasets.                                                                                                                                                                                         |
+| Web-app view as Driver vs Operator                                  | Mileage review (Part 2) sat next to Fleet/Conflicts like just another ops page so it was confused and inefficient for reviewing. Replaced it with a Part 1 / Part 2 views toggle.                                                                       |
+| Non-auth commit (fake “pick a driver” without real authenitication) | Did not prove the invariant well enough on my end — concurrent demand needs two real people. So I implemented Google Auth + live Vercel login so graders can race the same car without local secret setup (verified that when deployed localy as well). |
 
 
 
 
 ## 4. What you checked by hand
 
-This is where I wouldn’t trust the agent alone — invariant, money language, and dirty data.
+This is where I wouldn’t trust the agent alone. Almost every slice got a retrospective look from me, but I was stricter on data handling and integrity (seed, commitments, miles). I usually checked through the running app UI. If the screen couldn’t explain a requirement, it wasn’t done.
 
-
-| What I verified myself                                                                         | Why that, not something else                                                |
-| ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Seed dual-ACTIVE on `veh-004` → Conflicts / `CONFLICTING`                                      | Assignment says load as-is; silently “fixing” seed would fail the brief     |
-| Two Chrome profiles + two Gmails, same car, Commit → one win / one `409 VEHICLE_NOT_AVAILABLE` | The showcase is concurrent demand; a fake driver dropdown wouldn’t prove it |
-| Partial unique index + `FOR UPDATE` path in `subscriptions.ts` / migration SQL                 | UI copy can lie; the index is the real lock                                 |
-| Early-end ledger on My cars (“would I paste this in an email?”)                                | Brief cares about defendable charges, not payment processors                |
-| Feed: `vinChange` on IMEI `…003`, TX-480041 bad odo, raw-only `tripData`                       | Easy for an agent to average miles or invent trips; I checked the file      |
-| Google OAuth + env on Vercel (live demo)                                                       | Graders hit the live link; local secrets are easy to get wrong              |
-
-
-I spent less hand time on font/spacing polish. Pretty UI doesn’t prove the invariant or a mileage decision.
-
----
+- **Two people racing one car:** Two Chrome profiles, two real Gmails from two different browsers, same free car, Commit together → one wins, the other gets a clear “not available” message without crashing the app. In addition, after reloading the page the taken car is gone.
+- **What’s owed on early end:** On My cars, schedule end and end now, then read the ledger.
+- **Seed contradictions:** After load, I opened Conflicts and checked the car that had two live subscriptions. One stayed live; the other was quarantined.
+- **UI/UX:** Occasionally general UI/UX with the live app.
+- **Public deployment:** Live Vercel site and Google login (offered that as seamless approach for submission, while local deployment is a place for secret misconfigurations).
+- **Trusted miles on Review:** On Mileage review view I opened a real trip and checked the mileage decision — not only that the card looked fine. I confirmed the trusted miles matched either the odometer change or `tripDistance`, green/healthy are not enough if the miles are wrong.
 
 
 
 ## 5. What you’d have done differently
 
-- **Write these five HOW-I-BUILT-IT sections as I went**, not as a follow-up — they’re part of the deliverable, not an afterthought.  
-- **Freeze forks in** `DECISIONS.md` **before more UI** (especially Part 1 vs Part 2 header) so agents don’t thrash nav.  
-- **After any folder move (**`fe`**/**`be`**), immediately check that dynamic Tailwind classes still paint** — or prefer plain CSS for status colors from day one.  
-- **Constrain prompts harder on “do not invent joins or clean seed contradictions.”** The rules file said it; I’d repeat it at the start of every Part 2 prompt.  
-- **Keep a short “hand-check checklist” in the repo** (race commit, Conflicts row, one bad trip) and run it before calling a slice done.
+- **Day-zero documentation — referring the agent to it through** `vaya.mdc`**.** Useful, and especially useful for files that document evolving process like `DECISIONS.md` and `HOW-I-BUILT-IT.md`.
+- **Freeze forks in** `DECISIONS.md` **before more UI** (especially Part 1 vs Part 2 header) so agents don’t thrash nav.
+- **After any folder move (**`fe` **/** `be`**), immediately check that dynamic Tailwind classes still paint** — or prefer plain CSS for status colors from day one. Either way, pay attention to that and minimize manual actions that affect many other things and knock the agent off track.
+- **Constrain prompts harder:** do not invent joins or new placeholder data without explicitly notifying me.
 
 
 
 ## CI/CD
 
-- Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
-
----
+- Every merge from any branch that is not `main` always scans for secret leaks with `be/scripts/check-secrets.sh` and `.github/workflows/secret-scan.yml`.
 

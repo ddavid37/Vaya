@@ -19,6 +19,8 @@ Before answering questions in code, I set up the workplace:
 5. Prepared for later live deploy (Vercel)
 6. Set up the database on Supabase so I could see schemas and tables visually and potentially control them from there.
 
+
+
 ## 3. UI first, then questions one by one
 
 I did not jump straight into every domain question in the abstract. I structured the UI workspace first and worked with the screens in front of me.
@@ -87,6 +89,8 @@ I kept using the running app after each step so the next technical piece was dri
 
 ---
 
+
+
 ## What that process bought me
 
 - Confidence the agent stayed inside my rules (`vaya.mdc`)  
@@ -96,7 +100,11 @@ I kept using the running app after each step so the next technical piece was dri
 
 ---
 
+
+
 ## AI use
+
+
 
 ## 1. How you set the model up
 
@@ -128,41 +136,29 @@ I mostly worked directly on `main`, so the PR Action ran rarely; the script/hook
 
 **Subagents / MCP:** I did not build a custom multi-agent or MCP stack. Occasional IDE tooling for docs/browser checks when useful.  
 
-
-
 Ultimetly the ongoing loop was Cursor agent + rules + running UI + me.
 
 ## 2. Where it was wrong
 
-**Example — inventing a marketplace ↔ telemetry join**
+- **Inventing a marketplace telemetry join:** Early Part 2, the agent wanted trips (or vehicles) linked to seed marketplace cars — a foreign key or fuzzy VIN match — so “one fleet” would show in the UI. 
+  - **Wrong output:** schema/UI assumptions that feed cars are the same physical cars as `seed.json`.
+  - **How I noticed:** I compared and verified that the VINs are different to proove my assumption. 
+  - **What I did:** threw that away; kept parallel datasets; said so in `DECISIONS.md` and the telemetry memo. Ops explainability does not require a fake join.
+- **Second example (UI):** after the `fe/` / `be/` split, Mileage review “still had” Tailwind classes like `border-green-400` / `text-yellow-600` in code, but frames and FAIR/HEALTHY colors disappeared on screen. I noticed against a video I’d recorded earlier. 
+  - Fix was plain CSS classes in `globals.css` (Tailwind wasn’t emitting those utilities from domain helper strings). Trust the running UI, not only the class names in the file esspecially when changing and orgenizing the project directories.
 
-Early Part 2, the agent wanted trips (or vehicles) linked to seed marketplace cars — a foreign key or fuzzy VIN match — so “one fleet” would show in the UI.
 
-**Wrong output:** schema/UI assumptions that feed cars *are* the same physical cars as `seed.json`.
-
-**How I noticed:** I compared VINs. Feed uses values like `1HGCV1F…` / `JM1BPB…`; they do not appear in the seed. Joining them would invent identity the files don’t support.
-
-**What I did:** threw that away; kept parallel datasets; said so in `DECISIONS.md` and the telemetry memo. Ops explainability does not require a fake join.
-
-**Second example (UI):** after the `fe/` / `be/` split, Mileage review “still had” Tailwind classes like `border-green-400` / `text-yellow-600` in code, but frames and FAIR/HEALTHY colors disappeared on screen. I noticed against a video I’d recorded earlier. Fix was plain CSS classes in `globals.css` (Tailwind wasn’t emitting those utilities from domain helper strings). Trust the running UI, not only the class names in the file.
-
----
 
 ## 3. What you threw away
 
-Roughly a small slice of early work — on the order of **~5–15%** of the first schema/UI passes — not half the repo.
+
+| Thrown away                                 | Why                                                                                                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FK / single-fleet link feed → seed vehicles | Invented join; VINs don’t match between the different datasets.                                                                                                               |
+| Web-app view as Driver vs Operator          | Mileage review (Part 2) sat next to Fleet/Conflicts like just another ops page so it was confused and inefficient for reviewing. Replaced it to Part 1 / Part 2 views toggle. |
 
 
-| Thrown away                                 | Why                                                                                    |
-| ------------------------------------------- | -------------------------------------------------------------------------------------- |
-| FK / single-fleet link feed → seed vehicles | Invented join; VINs don’t match                                                        |
-| Header as Driver vs Operator                | Blurred Part 2 Disputes into “ops” next to Fleet; replaced with Part 1 / Part 2 toggle |
-| Bits of over-built nav / empty polish       | Didn’t help defend a charge or prove the invariant                                     |
 
-
-Kept what survived contact with the screens and the data files.
-
----
 
 ## 4. What you checked by hand
 
@@ -183,6 +179,8 @@ I spent less hand time on font/spacing polish. Pretty UI doesn’t prove the inv
 
 ---
 
+
+
 ## 5. What you’d have done differently
 
 - **Write these five HOW-I-BUILT-IT sections as I went**, not as a follow-up — they’re part of the deliverable, not an afterthought.  
@@ -191,11 +189,11 @@ I spent less hand time on font/spacing polish. Pretty UI doesn’t prove the inv
 - **Constrain prompts harder on “do not invent joins or clean seed contradictions.”** The rules file said it; I’d repeat it at the start of every Part 2 prompt.  
 - **Keep a short “hand-check checklist” in the repo** (race commit, Conflicts row, one bad trip) and run it before calling a slice done.
 
+
+
 ## CI/CD
 
 - Every merdge from any branch witch is not main alwys scan for any secreats leak with [check-secrets.sh,](http://check-secrets.sh) `.github/workflows/secret-scan.yml`.
 
 ---
-
-
 
